@@ -2,6 +2,10 @@ import { NavLink } from "react-router-dom";
 import "../../Styles/Sidebar.css";
 import homme from "../../images/homme1.png"
 import React  from "react";
+import TrendingDownIcon from '@material-ui/icons/TrendingDown';
+import TrendingUpIcon from '@material-ui/icons/TrendingUp';
+import TrackChangesIcon from '@material-ui/icons/TrackChanges';
+import EqualizerIcon from '@material-ui/icons/Equalizer';
 const Sidebar = ({ sidebarOpen, closeSidebar }) => {
  
 
@@ -24,9 +28,7 @@ const Sidebar = ({ sidebarOpen, closeSidebar }) => {
       <NavLink style={{ textDecoration: 'none', fontWeight: 700, color: '#a5aaad'}} to="/Dashboard" 
       activeClassName="sidebar__link active_menu_link">
     
-        <i style={{marginRight: '10px'}} class="fa fa-bar-chart" aria-hidden="true"></i>
-           
-            Dashboard
+        <EqualizerIcon /> Dashboard
          
         </NavLink>
         <h2>Tables</h2>
@@ -35,9 +37,7 @@ const Sidebar = ({ sidebarOpen, closeSidebar }) => {
         <NavLink style={{ textDecoration: 'none', fontWeight: 700, color: '#a5aaad'}} to="/encaissement" 
       activeClassName="sidebar__link active_menu_link">
     
-        <i style={{marginRight: '10px'}} class="fa fa-bar-chart" aria-hidden="true"></i>
-           
-            encaissement
+    <TrendingUpIcon />           encaissement
          
       
         </NavLink>
@@ -45,12 +45,10 @@ const Sidebar = ({ sidebarOpen, closeSidebar }) => {
         <br/>
 
        
-        <NavLink style={{ textDecoration: 'none', fontWeight: 700, color: '#a5aaad'}} to="/category" 
+        <NavLink style={{ textDecoration: 'none', fontWeight: 700, color: '#a5aaad'}} to="/decaissement" 
       activeClassName="sidebar__link active_menu_link">
     
-        <i style={{marginRight: '10px'}} class="fa fa-bar-chart" aria-hidden="true"></i>
-           
-            decaissement
+    <TrendingDownIcon /> decaissement
          
       
         </NavLink>
@@ -61,8 +59,7 @@ const Sidebar = ({ sidebarOpen, closeSidebar }) => {
         <NavLink style={{ textDecoration: 'none', fontWeight: 700, color: '#a5aaad'}} to="/objectif" 
       activeClassName="sidebar__link active_menu_link">
     
-        <i style={{marginRight: '10px'}} class="fa fa-bar-chart" aria-hidden="true"></i>
-        prévisions
+    <TrackChangesIcon /> prévisions
          
       
         </NavLink>

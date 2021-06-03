@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Cash",
+  "name": "Gérez la trésorerie de vote entreprise en toutes simplicité avec cash",
   "icons": [
     {
       "src": "favicon.ico",

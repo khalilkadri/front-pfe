@@ -15,8 +15,7 @@ import { withStyles } from "@material-ui/core/styles";
 import axios from "axios";
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
-
-
+import AddIcon from '@material-ui/icons/Add';
 const styles = theme => ({
     root: {
         width: "100%",
@@ -35,7 +34,8 @@ class Category extends React.Component {
         sid:'',
         name:'',
          update:'',
-         type:1
+         type:'',
+         ajouter:false,
 };
 /*handleClickMenu (event) {
     event.preventDefault();
@@ -47,7 +47,7 @@ class Category extends React.Component {
     this.setState({anchorEl:false});
   };*/
   componentDidMount(){
-    axios.get(`http://127.0.0.1:3333/cat?type=${this.state.type}`).then(res=>{
+    axios.get('http://127.0.0.1:3333/cat?type=encaissement').then(res=>{
         console.log(res.data)
      this.setState({data: res.data.list,cid:parseInt(res.data.ids.cid),sid:parseInt(res.data.ids.sid)})
        })  
@@ -56,17 +56,12 @@ class Category extends React.Component {
       
     handleSubmit = event => {
         event.preventDefault();
-        let types;
-        if(this.state.type==1)
-        types="decaissement"
-        if(this.state.type==0)
-        types="encaissement"
         
         const cat = {
             user_id:"1",
           nom: this.state.name,
           show:false,
-          type:types  
+          type:this.state.type 
         }
     
         let id=(parseInt(this.state.cid,10)+1)
@@ -84,6 +79,7 @@ class Category extends React.Component {
             this.setState({name:''})
             console.log(this.state.data)
           })
+          this.handleCloseAjouter()
       }
       handleSubmitSubcat(event,id) {
         event.preventDefault();
@@ -123,11 +119,17 @@ class Category extends React.Component {
         event.preventDefault();
         this.setState({ name: event.target.value});
       }
-      handleChangetab = (event, newValue) =>{
-        this.setState({type: newValue});
-        axios.get(`http://127.0.0.1:3333/cat?type=${this.state.type}`).then(res=>{
+      handleTabEncaissement = (event) =>{
+        axios.get('http://127.0.0.1:3333/cat?type=encaissement').then(res=>{
             console.log(res.data)
-         this.setState({data: res.data.list,cid:parseInt(res.data.ids.cid),sid:parseInt(res.data.ids.sid)})
+         this.setState({data: res.data.list,type:'encaissement',cid:parseInt(res.data.ids.cid),sid:parseInt(res.data.ids.sid)})
+           }) 
+
+      };
+      handleTabDecaissement = (event) =>{
+        axios.get('http://127.0.0.1:3333/cat?type=decaissement').then(res=>{
+            console.log(res.data)
+         this.setState({data: res.data.list,type:'decaissement',cid:parseInt(res.data.ids.cid),sid:parseInt(res.data.ids.sid)})
            }) 
 
       };
@@ -257,31 +259,39 @@ class Category extends React.Component {
         
         
     }
-
+handleAjouter(e){
+    e.preventDefault();
+    this.setState({ajouter:true})
+}
+handleCloseAjouter(e){
+    e.preventDefault();
+    this.setState({ajouter:false})
+}
       
   render() {
           const items = this.state.data;
           const { classes } = this.props;
           console.log(this.state.type)
           return (
-            <>
-            <Tabs
-            value={this.state.type}
-            onChange={this.handleChangetab}
-            indicatorColor="primary"
-            textColor="primary"
-            centered
-          >
-            <Tab label="Encaissement" ></Tab>
-            <Tab label="Décaissement" />
-        
-          </Tabs>
+              
+            <div className="w-75">
+            <div className="container mt-5 mx-auto " style={{display:"flex",justifyContent:"center",alignItems:"center"}}>
+              <ul className="container nav nav-tabs ">
+              <li className="nav-item nav-link" onClick={e=>{this.handleTabEncaissement(e)}}>Encaissement</li>
+              <li className="nav-item nav-link" onClick={e=>{this.handleTabDecaissement(e)}}>Decaissement</li>
+              </ul>
+              </div>
+
               <div>
-                  <div>
-                      <form>
-                          <input type="text" name = "name" onChange={(e)=>this.handleChange(e)}  placeholder="saisir catégorie"/>
-                          <button type="submit" onClick = { this.handleSubmit }>valider</button>
+                  <div className="container mt-5">
+                      {(this.state.ajouter===false)?(
+                      <button className="btn btn-primary" onClick={e=>{this.handleAjouter(e)}}><AddIcon/>ajouter catégorie</button>):
+                      (<form class="form-inline" >
+                          <input class="form-control mr-3" type="text" name = "name" onChange={(e)=>this.handleChange(e)}  placeholder="saisir catégorie"/>
+                          <button class="btn btn-primary mr-3" type="submit" onClick = { this.handleSubmit }>valider</button>
+                          <button class="btn btn-danger" onClick={e=>{this.handleCloseAjouter(e)}} >annuler</button>
                       </form>
+                      )}
                   </div>
                   {items.map(item => {
                       return (
@@ -289,7 +299,7 @@ class Category extends React.Component {
                           <List>
                                   
                                           {item.subcategories.length != 0 ? (
-                                              <div>
+                                              <div className="container mr-5">
                                                   <ListItem key={item.id}
                                                   >
                                                       {item.show ===false ?(<ListItemText
@@ -297,7 +307,7 @@ class Category extends React.Component {
                                                       />):(<form key={item.id} onSubmit={(e)=>this.handleUpdate(item.id,e)}><input type="text" class="form-control form-control-sm" name="update" defaultValue={this.state.name} onChange={(e)=>this.handleChange(e)} />
                                                       <button type="cancel">cancel</button>
                                                       </form>)}
-                                                     <div >
+                                                     <div className="container ml-5">
                                                          
                                                    <Button key={item.id} onClick={(e)=>this.handleshowSubCat(e,item.id)}><AddCircle/></Button>
                                                    <Button key={item.id} onClick={(e)=>this.handleshowCat(e,item.id)}><Edit/></Button>
@@ -354,10 +364,11 @@ class Category extends React.Component {
                                                                     }
                                                                          
                                                                           
-                                                                          <div >
+                                                                          <div className="container ml-5">
                                                                <Button key={sitem.id} onClick={(e)=>this.handleShowUpdateSub(e,item.id,sitem.id)}><Edit/></Button>
                                                    <Button key={sitem.id} onClick={(e)=>this.deleteSub(e,sitem.id,item.id)}><Delete/></Button>
-                                                   </div>
+                                                   </div>                                                   <Divider key={sitem.id} absolute />
+
                                                                       </ListItem>
                                                                       
                                                                   );
@@ -382,8 +393,8 @@ class Category extends React.Component {
                                                   >
                                                       {item.show ===false ?(<ListItemText
                                                           primary={item.nom}
-                                                      />):(<form key={item.id} onSubmit={(e)=>this.handleUpdate(item.id,e)}><input type="text" name="update" defaultValue={item.nom} onChange={(e)=>this.handleChange(e)}/></form>)}
-                                                     <div >
+                                                      />):(<form key={item.id} onSubmit={(e)=>this.handleUpdate(item.id,e)}><input class="form-control form-control-sm"type="text" name="update" defaultValue={item.nom} onChange={(e)=>this.handleChange(e)}/></form>)}
+                                                     <div className="container ml-5">
                                                          
                                                      <Button key={item.id} onClick={(e)=>this.handleshowSubCat(e,item.id)}><AddCircle/></Button>
                                                    <Button key={item.id} onClick={(e)=>this.handleshowCat(e,item.id)}><Edit/></Button>
@@ -408,7 +419,9 @@ class Category extends React.Component {
                       );
                   })}
               </div>
-              </>
+  
+              </div>
+             
           );
       }
 }
