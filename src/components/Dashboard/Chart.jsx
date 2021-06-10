@@ -11,7 +11,6 @@ import Objectif from './Objectif';
 import { faThList } from '@fortawesome/free-solid-svg-icons';
 import {Jumbotron} from 'react-bootstrap'
 import Operation_prevision from '../Navbar/Operation_prevision';
-
 class Chart extends React.Component{
   constructor(props){
     super(props)
@@ -273,7 +272,6 @@ return(
    <div className="container-fluid row">
  
       <div className="col-sm-4 " >
-
       </div>
      <Jumbotron  className="col-sm-6">
      <Bar  style={{position: 'relative', height:'40vh', width:'80vw'}}
