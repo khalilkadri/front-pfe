@@ -19,6 +19,7 @@ import { withStyles,makeStyles } from '@material-ui/core/styles';
 import ModalHeader from 'react-bootstrap/esm/ModalHeader';
 import { ModalBody, ModalFooter, ModalTitle } from 'react-bootstrap';
 import { ContactSupportOutlined } from '@material-ui/icons';
+import encaissement from "../../images/encaissement.svg";
 
 const useStyles = makeStyles((theme) => ({
 
@@ -54,11 +55,11 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "#90D2E2",
   },
   cell:{
-    minWidth:200,
+    minWidth:232,
   },
  
   montant:{
-    minWidth:100,
+    minWidth:132,
     textAlign:'center',
   }
 }))
@@ -81,7 +82,11 @@ function getModalStyle() {
   };
 }
 
-function Encaissement(){
+function Encaissement(props){
+ 
+
+
+const [color, setColor] = React.useState("");
 
 const classes = useStyles();
 const [modalStyle] = React.useState(getModalStyle);
@@ -105,14 +110,26 @@ const [subcats,setSubcats]=React.useState([])
 const [cat,setCat]=React.useState('abonnements');
 const [cats,setCats]=React.useState([]);
 const [year,setYear]=React.useState('2021')
+const[disabled,setDisabled]=React.useState(true)
+const[disablereglement,setDisablereglement]=React.useState(true)
+const[success,setSuccess]=React.useState(false)
+const style2 = {
+  cursor: "pointer" ,
+  backgroundColor:color
+}
+
 useEffect(() => {
   const fetchData = async () => {
-const result=await axios.get('http://127.0.0.1:3333/enc-month??year=2021')
+    console.log(props.onYearChange)
+    setYear(props.onYearChange)
+ 
+const result=await axios.get('http://127.0.0.1:3333/enc-month?year=2021')
 setdata(result.data)
 console.log(data)
 let opts=[]
-const res=await axios.get('http://127.0.0.1:3333/encaisse?year=2021')
+const res=await axios.get('http://127.0.0.1:3333/cat?type=encaissement')
   setCats(res.data.list)
+  console.log(cats)
 };
  
 fetchData();
@@ -167,56 +184,76 @@ setReglement(date_facts.toString())
 setCategorie(item.categorie)
 setSubcategorie(item.subcategorie)
 setMemo(item.memo)
+let subs=[]
+for(let i of cats)
+{
+  if(i.nom==item.categorie && i.subcategories.length!=0)
+  { 
+    for (let j of i.subcategories)
+    subs.push(j)
+  }
+ 
+}
+setSubcats(subs)
+
  };
  
  const handleClosemodal = () => {
   setOpenmodal(false)
  };
-const handleChangeIntitule=(e)=>{
-  e.preventDefault();
-  setIntitule(e.target.value)
-
+ const validate=()=>{
+  if(intitule!=''&&type!=''&&montant!=''&&tva!=''&&facturation!=''&&cat!='')
+  setDisabled(false)
+  else setDisabled(true)
 }
-const handleChangeType=(e)=>{
-  e.preventDefault();
-  setType(e.target.value)
+ 
+ const handleChangeIntitule=(e)=>{
+   e.preventDefault();
+   setIntitule(e.target.value)
+ validate()
+ }
+ const handleChangeType=(e)=>{
+   e.preventDefault();
+   setType(e.target.value)
+   if(e.target.value=='payee')
+   {setDisablereglement(true)
+    setReglement('')
+   }
+   else if (e.target.value=='engagee')
+   setDisablereglement(false)
+   validate()
+ }
+ const handleChangeMontant=(e)=>{
+   e.preventDefault();
+   setMontant(e.target.value)
+   validate()
+ }
+ const handleChangeTva=(e)=>{
+   e.preventDefault();
+   setTva(e.target.value)
+   validate()
+ }
+ const handleChangeFacturation=(e)=>{
+   e.preventDefault();
+   setFacturation(e.target.value)
+   validate()
+ }
+ const handleChangeReglement=(e)=>{
+   e.preventDefault();
+   setReglement(e.target.value)
+   validate()
+ }
 
-}
-const handleChangeMontant=(e)=>{
-  e.preventDefault();
-  setMontant(e.target.value)
-
-}
-const handleChangeTva=(e)=>{
-  e.preventDefault();
-  setTva(e.target.value)
-
-}
-const handleChangeFacturation=(e)=>{
-  e.preventDefault();
-  setFacturation(e.target.value)
-
-}
-const handleChangeReglement=(e)=>{
-  e.preventDefault();
-  setReglement(e.target.value)
-
-}
-const handleChangeCategorie=(e)=>{
-  e.preventDefault();
-  setCategorie(e.target.value)
-
-}
-const handleChangeSubcategorie=(e)=>{
-  e.preventDefault();
-  setSubcategorie(e.target.value)
-
-}
-const handleChangeMemo=(e)=>{
-  e.preventDefault();
-  setMemo(e.target.value)
-
-}
+ const handleChangeSubcat=(e)=>{
+   e.preventDefault();
+   setSubcategorie(e.target.value)
+   validate()
+ }
+ const handleChangeMemo=(e)=>{
+   e.preventDefault();
+   setMemo(e.target.value)
+ 
+ }
 const handleDelete=(e,item)=>{
   e.preventDefault();
   axios.delete(`http://127.0.0.1:3333/encaisse/${id}`).then(res => {   
@@ -225,7 +262,7 @@ const handleDelete=(e,item)=>{
           setEncaissements(tab)
 
   })   
-  handleClosemodal();
+  handleClosemodal()
 
 }
 const handleUpdate=(e)=>{
@@ -256,18 +293,17 @@ axios.put(`http://127.0.0.1:3333/encaisse/${id}`,encaisse).then(res=>{
       i.memo=memo
       continue
     }
-    handleClosemodal();
     setEncaissements(tab)
+    setSuccess(true)
+    handleClosemodal()
+
   
 })
 }
-const handleYear=(e)=>{
-  e.preventDefault()
-   setYear(e.target.value)
-    axios.get(`http://127.0.0.1:3333/dec-month?year=${e.target.value}`).then(res=>{
+const handleYear=(years)=>{
+  axios.get(`http://127.0.0.1:3333/enc-month?year=${years}`).then(res=>{
   setdata(res.data)
   })
-  console.log(year)
 
   }
 const handleSelect=(e)=>{
@@ -276,7 +312,7 @@ const handleSelect=(e)=>{
   let subs=[]
   for(let i of cats)
   {
-    if(i.nom==cat && i.subcategories.length!=0)
+    if(i.nom==e.target.value && i.subcategories.length!=0)
     { 
       for (let j of i.subcategories)
       subs.push(j)
@@ -286,7 +322,24 @@ const handleSelect=(e)=>{
   setSubcats(subs)
   console.log(cat,subcats)
 }
+const init=()=>{
+  setType('')
+  setIntitule('')
+  setMontant('')
+  setFacturation('')
+  setReglement('')
+  setCat('')
+  setSubcategorie('')
+  setSubcats([])
+  setDisabled(true)
+  setDisablereglement(false)
+}
+const cancel=(e)=>{
+  e.preventDefault()
+  handleClosemodal()
+  init()
 
+}
 let body=  (<div style={modalStyle} className={classes.paper}> 
 <Table>
   <TableHead>
@@ -320,75 +373,88 @@ let body=  (<div style={modalStyle} className={classes.paper}>
         <ModalHeader>
             <ModalTitle><TrendingUpIcon style={{color:"green"}}/> Modifier opération</ModalTitle>          
             </ModalHeader>
-        <form  >
+            <form  onSubmit={(e)=>handleUpdate(e)}>
         <ModalBody>
-
-        
         <div class="row">
         <div class="col-sm-6">
     <label >intitulé</label>
-    <input type="text" class="form-control"  onChange={e=>{handleChangeIntitule(e)}} defaultValue={intitule} id="intitule" /></div>
+    <input type="text" class="form-control"  onChange={e=>handleChangeIntitule(e)} id="intitule" value={intitule}/>
+    {(intitule=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>
+):(<area/>)}
+</div>
     <div class="col-sm-6">
     <label for="type">type de l'opération</label>
-    <select class="form-control" id="type" onChange={e=>{handleChangeType(e)}} defaultValue={type} >
+    <select class="form-control" id="type" onChange={e=>handleChangeType(e)} value={type}>
+      <option selected disabled>sélectionner type</option>
       <option value="payee">payée</option>
       <option value="engagee">engagée</option>
     </select>
+    {(type=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
 </div>
   </div>
        
   <div class="row mt-3">
   <div class="col-sm-6">
     <label >Montant</label>
-    <input type="number" class="form-control" id="montant" onChange={e=>{handleChangeMontant(e)}} defaultValue={montant} />
+    <input type="number" class="form-control" id="montant" onChange={e=>handleChangeMontant(e)}  value={montant}/>
+    {(montant=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
   </div>
   <div class="col-sm-6"><label >TVA</label>
-    <input type="number" class="form-control" id="tva" onChange={e=>{handleChangeTva(e)}}  defaultValue={tva}/></div>
+    <input type="number" class="form-control" id="tva" onChange={e=>handleChangeTva(e)}  value={tva}/>
+</div>
   </div>
   <div class="row mt-3">
   <div class="col-sm-6">
     <label >Date de facturation</label>
-    <input type="date" class="form-control" id="facturation" onChange={e=>{handleChangeFacturation(e)}} defaultValue={facturation}/>
+    <input type="date" class="form-control" id="facturation" onChange={e=>handleChangeFacturation(e)}  value={facturation}/>
+    {(facturation=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
   </div>
   <div class="col-sm-6"><label >Date de règlement</label>
-    <input type="date" class="form-control" id="reglement" onChange={e=>{handleChangeReglement(e)}}  defaultValue={reglement}/></div>
+    <input type="date" class="form-control" id="reglement" onChange={e=>handleChangeReglement(e)} value={reglement} disabled={disablereglement}/>    
+    {(!disablereglement)?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+</div>
   </div>
   <div class="form-group mt-3">
     <label for="cats"> Catégorie</label>
-    <select class="form-control"   onChange={e=>{handleSelect(e)}} defaultValue={categorie}>
-    <option disabled selected>selectionner catégorie</option>
-        {cats.map(e=>(
-            <option  value={e.nom}>{e.nom}</option>
+    <select class="form-control"   onChange={e=>handleSelect(e)} value={categorie}>
+    <option selected disabled>selectionner catégorie</option>
+        {cats.map(event=>(
+            <option  value={event.nom}>{event.nom}</option>
         ))}
       </select>
+      {(cat=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
         </div>
         {(subcats.length!=0)?(
         <div class="form-group mt-3">
     <label for="cats"> Sous Catégorie</label>
-    <select class="form-control" id="cats" name="cats" defaultValue={subcategorie}>
-        <option>selectionner sous catégorie</option>
-        {subcats.map(e=>(
-            <option >{e.nom}</option>
+    <select class="form-control"  onChange={e=>handleChangeSubcat(e)} value={subcategorie}>
+      <option selected disabled>sélectionner sous-catégorie</option>
+        {subcats.map(event=>(
+            <option >{event.nom}</option>
         ))}
       </select>
-        </div>):(<area/>)}
+      {(subcategorie=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+        </div>):(<area/>)
+        }
   <div class="form-group mt-3">
     <label > Mémo</label>
-    <input type="text" class="form-control" id="memo" onChange={e=>{handleChangeMemo(e)}}  defaultValue={memo}/>
+    <input type="text" class="form-control" id="memo" onChange={e=>handleChangeMemo(e)}  value={memo}/>
   </div>
-  <div class="row">
+  
+
+
+<br/>
+<div class="row">
 <button className="btn btn-outline-danger  col m-3" onClick={e=>{handleDelete(e,id)}}>Supprimer</button>
 <button className="btn btn-outline-success col m-3" onClick={e=>handleUpdate(e)}>Modifier</button>
 
 </div>
-<br/>
-     
-</ModalBody>
-<ModalFooter>
-          <div><button  type="cancel"   class="btn btn-primary" onClick={handleClosemodal}>
-                    Fermer
+        </ModalBody>
+        <ModalFooter>
+          <div><button  type="cancel"   class="btn btn-primary " onClick={handleClosemodal}>
+                    fermer
                  </button></div>
-              
+                
         
                  
                  </ModalFooter>
@@ -401,18 +467,32 @@ let body=  (<div style={modalStyle} className={classes.paper}>
  const items=data
  const eps=encaissements
  return (
-    
-<div class="container mt-5">
-<div  className="inline m-5"style={{display: 'flex',  justifyContent:'center', alignItems:'center'}}>
+  <main>
+  <div className="main__container container-fluid">
+  
+
+    <div className="main__title mb-3 d-flex justify-content-center">
+      <img src={encaissement} alt="encaissement" />
+      <div className="main__greeting">
+        <h1>Encaissements</h1>
+      </div>
+    </div>
+
+ 
+  
+  </div>
+<div class="container-fluid">
+<div  className="inline m-5 d-none"style={{display: 'flex',  justifyContent:'center', alignItems:'center'}}>
   <form class="form-inline" >
 <label for="years"> veuillez choisir l'année:</label>
-<select class="form-control ml-3" id="years" name="years"  onChange={handleYear}>
-        <option value="2019">2019</option>
-        <option value="2020">2020</option>
-        <option value="2021" selected>2021</option>
+<select class="form-control ml-3" id="years" name="years" value={props.year} onChange={handleYear}>
+        <option value="2019" >2019</option>
+        <option value="2020" >2020</option>
+        <option value="2021" >2021</option>
       </select>
       </form>
       </div>
+      
   <Table className="table table-bordered" >
     <TableHead style={{backgroundColor: "#e6e6e6"}}>
       <TableRow >
@@ -458,10 +538,11 @@ let body=  (<div style={modalStyle} className={classes.paper}>
                                                       unmountOnExit
                                                   >
                    {item.subs.map(sid=>(
-           <TableRow>
+           <TableRow style={style2}  onMouseEnter={(e) => setColor("#cfcfcf")}
+           onMouseLeave={(e) => setColor("")} > 
              <TableCell className={classes.cell}>{sid.subcategorie}</TableCell>
              {sid.sum.map(e=>(
-               <TableCell className={classes.montant}><Button onClick={event=>{handleOpen(event,e,sid)}}>{e.montant}</Button></TableCell>
+               <TableCell  className={classes.montant} onClick={event=>{handleOpen(event,e,sid)}}>{e.montant} </TableCell>
              ))}                             
            </TableRow>
            
@@ -500,8 +581,17 @@ let body=  (<div style={modalStyle} className={classes.paper}>
         aria-describedby="simple-modal-description"
       >
       {body}
-      </Modal>      
+      </Modal>   
+      {(success)?(<div class="toast">
+  <div class="toast-header">
+    Succes!
+  </div>
+  <div class="toast-body">
+    Modifié avec Succes! 
+  </div>
+</div>):(<area/>)}   
 </div>
+</main>
   );
       
 }

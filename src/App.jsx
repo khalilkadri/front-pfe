@@ -41,16 +41,14 @@ return(
 <Route exact path="/contact" component={Contact}/>
 <Route exact path="/login" component={Login}/>
 <Route exact path="/register" component={Register}/>
-<div className="container2">
+<div >
 <LoggedNavbar sidebarOpen={sidebarOpen} openSidebar={openSidebar} />
-<main>
-<Route exact path="/encaissement" component={() => (!isLoggedIn() ? <Redirect to="/login" />:<Encaissement year="2021"/>)}/>
-<Route exact path="/decaissement" component={() => (!isLoggedIn() ? <Redirect to="/login" />:<Decaissement year="2021"/>)}/>
+<Route exact path="/encaissement" component={() => (!isLoggedIn() ? <Redirect to="/login" />:<Encaissement />)}/>
+<Route exact path="/decaissement" component={() => (!isLoggedIn() ? <Redirect to="/login" />:<Decaissement />)}/>
 <Route exact path="/dashboard" component={() => (!isLoggedIn() ? <Redirect to="/login" /> : <Chart/>)}/>
 <Route exact path="/category" component={() => (!isLoggedIn() ? <Redirect to="/login" /> : <Category/>)}/>
 <Route exact path="/objectif" component={() => (!isLoggedIn() ? <Redirect to="/login" /> : <Objectif/>)}/>
-</main>
-<Sidebar sidebarOpen={sidebarOpen} closeSidebar={closeSidebar} />
+
 </div>
 <Redirect to='/'/>
 </Switch>

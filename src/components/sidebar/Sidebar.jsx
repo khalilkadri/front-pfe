@@ -12,13 +12,13 @@ const Sidebar = ({ sidebarOpen, closeSidebar }) => {
   return (
     <div className={sidebarOpen ? "sidebar_responsive" : ""} id="sidebar">
       <div className="sidebar__title">
-        <div >
+        <div className="container">
         <img src={homme} alt="logo" />
           <h1>Code Hut</h1>
         </div>
         <i
           onClick={() => closeSidebar()}
-          className="fa fa-times"
+          className="fa fa-times ml-5"
           id="sidebarIcon"
           aria-hidden="true"
         ></i>

@@ -18,6 +18,8 @@ import { withStyles,makeStyles } from '@material-ui/core/styles';
 import ModalHeader from 'react-bootstrap/esm/ModalHeader';
 import { ModalBody, ModalFooter, ModalTitle } from 'react-bootstrap';
 import { ContactSupportOutlined } from '@material-ui/icons';
+import AddIcon from '@material-ui/icons/Add';
+import prevision from "../../images/prevision.svg";
 
 const useStyles = makeStyles((theme) => ({
 
@@ -53,11 +55,11 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "#90D2E2",
   },
   cell:{
-    minWidth:200,
+    minWidth:232,
   },
  
   montant:{
-    minWidth:100,
+    minWidth:132,
     textAlign:'center',
   }
 }))
@@ -85,6 +87,7 @@ function Objectif(){
 const classes = useStyles();
 const [modalStyle] = React.useState(getModalStyle);
 const [open, setOpen] = React.useState(false);
+const [openModal, setOpenModal] = React.useState(false);
 const [id,setID]=React.useState();
 const [montant,setMontant]=React.useState('');
 const [type,setType]=React.useState('');
@@ -93,16 +96,17 @@ const [subcategorie,setSubcategorie]=React.useState('');
 const [data, setdata] = React.useState([]);
 const [subs,setSubs]=React.useState(false);
 const [encaissements,setEncaissements]=React.useState([]);
-const [month_year,setMonth_year]=React.useState();
+const [month,setMonth]=React.useState();
 const [subcats,setSubcats]=React.useState([])
 const [cat,setCat]=React.useState('');
+const [subcat,setSubcat]=React.useState('');
 const [cats,setCats]=React.useState([]);
 const [year,setYear]=React.useState('2021')
 const months=[{id:"0",value:"Janvier"},{id:"1",value:"Février"},{id:"2",value:"Mars"},{id:"3",value:"Avril"},{id:"4",value:"Mai"},
 {id:"5",value:"Juin"},{id:"6",value:"July"},{id:"7",value:"Aout"},{id:"8",value:"Septembre"},{id:"9",value:"Octobre"},{id:"10",value:"Novembre"},{id:"11",value:"Décembre"}]
 useEffect(() => {
   const fetchData = async () => {
-await axios.get('http://127.0.0.1:3333/enc-month?year=2021').then(res=>{
+await axios.get('http://127.0.0.1:3333/objectif?year=2021').then(res=>{
 setdata(res.data)
 })
 await axios.get('http://127.0.0.1:3333/cat?type=encaissement').then(res=>{
@@ -116,6 +120,18 @@ const handleOpen =(e)=> {
   e.preventDefault();
 
  setOpen(true)
+
+};
+const handleOpenModal =(e)=> {
+  e.preventDefault();
+
+ setOpenModal(true)
+
+};
+const handleCloseModal =(e)=> {
+  e.preventDefault();
+
+ setOpenModal(false)
 
 };
 const handleClick=(e,item)=>{
@@ -161,7 +177,33 @@ const handleChangeSubcategorie=(e)=>{
   setSubcategorie(e.target.value)
 
 }
+const handleSubmit=(e)=>{
+  const config= {
+    headers:{
+        Authorization: 'Bearer '+localStorage.getItem('token')
+    }
+};
+    e.preventDefault();
+    axios.post('http://127.0.0.1:3333/objectif', {
 
+      user_id:'1',
+        montant:montant,
+        type:type,
+        year:year,
+        month:month,
+        categorie:cat,
+        subcategorie:subcat,
+       },
+        
+
+    )
+    .then(res=>{
+      handleCloseModal(e)
+
+        }
+    )
+  
+}
 const handleDelete=(e,item)=>{
   e.preventDefault();
   axios.delete(`http://127.0.0.1:3333/encaisse/${id}`).then(res => {   
@@ -175,13 +217,15 @@ const handleDelete=(e,item)=>{
 }
 const handleUpdate=(e)=>{
   e.preventDefault();
-  const encaisse = {
+  const objectif = {
   montant:montant,
   type:type,
-  categorie:categorie,
-  subcategorie:subcategorie,
+  year:year,
+  month:month,
+  categorie:cat,
+  subcategorie:subcat,
 }
-axios.put(`http://127.0.0.1:3333/encaisse/${id}`,encaisse).then(res=>{
+axios.put(`http://127.0.0.1:3333/objectif/${id}`,objectif).then(res=>{
   let tab=encaissements
   for (let i of tab)
     if(i.id===id){
@@ -208,9 +252,6 @@ const handleYear=(e)=>{
   const selectType=(e)=>{
 e.preventDefault()
 setType(e.target.value)
-     axios.get(`http://127.0.0.1:3333/cat?type=${e.target.value}`).then(res=>{
-  setCats(res.data.list)
-})
   }
 const handleSelect=(e)=>{
   e.preventDefault();
@@ -228,23 +269,36 @@ const handleSelect=(e)=>{
   setSubcats(subs)
   console.log(cat,subcats)
 }
-
+const handleSubcat=(e)=>{
+  e.preventDefault()
+  setSubcat(e.target.value)
+}
+const handleMonth=(e)=>{
+  e.preventDefault()
+  setMonth(e.target.value)
+}
 
  const items=data
  const eps=encaissements
  return (
-    
-<div class="container mt-5">
-<div  className="inline m-5"style={{display: 'flex',  justifyContent:'center', alignItems:'center'}}>
-  <form class="form-inline" >
-<label for="years"> veuillez choisir l'année:</label>
-<select class="form-control ml-3" id="years" name="years"  onChange={e=>{handleYear(e)}}>
-        <option value="2019">2019</option>
-        <option value="2020">2020</option>
-        <option value="2021" selected>2021</option>
-      </select>
-      </form>
+  <main>
+  <div className="main__container container-fluid">
+  
+
+  <div className="main__title mb-3 d-flex justify-content-center">
+      <img src={prevision} alt="prevision" />
+      <div className="main__greeting">
+        <h1>Prévisions</h1>
       </div>
+     
+    </div>
+
+ 
+
+  
+
+
+
   <Table className="table table-bordered" >
     <TableHead style={{backgroundColor: "#e6e6e6"}}>
       <TableRow >
@@ -337,7 +391,7 @@ const handleSelect=(e)=>{
         
         <div style={modalStyle} className={classes.paper1}> 
         <ModalHeader>
-            <ModalTitle><TrackChangesIcon style={{color:"green"}}/> Prévision</ModalTitle>          
+            <ModalTitle><TrackChangesIcon style={{color:"green"}}/>Modifier Prévision</ModalTitle>          
             </ModalHeader>
         <form  >
         <ModalBody>
@@ -412,8 +466,92 @@ const handleSelect=(e)=>{
         </form>
   </div>
       </Modal>
+        
+    <Modal
+       open={openModal}
+       onClose={handleCloseModal}
+       aria-labelledby="simple-modal-title"
+       aria-describedby="simple-modal-description"
+     
+      >
+        
+        <div style={modalStyle} className={classes.paper1}> 
+        <ModalHeader>
+            <ModalTitle><TrackChangesIcon style={{color:"green"}}/>Ajouter Prévision</ModalTitle>          
+            </ModalHeader>
+        <form className="needs-validation" >
+        <ModalBody>
+
+        
+        <div class="row">
+        <div class="col-sm-6">
+    <label >Montant</label>
+    <input type="number" class="form-control" id="montant"  onChange={handleChangeMontant} required/>
+  </div>
+    <div class="col-sm-6">
+    <label for="type">Type Du Prévision</label>
+    <select class="form-control" id="type"  onChange={e=>{selectType(e)}} required >
+      <option value="encaissement">Encaissement</option>
+      <option value="decaissement">Décaissement</option>
+    </select>
+</div>
+  </div>
+       
+  <div class="row mt-3">
+  <div class="col-sm-6">
+    <label >Année</label>
+    <select class="form-control" id="type"  onChange={handleYear} required >
+      <option value="2019">2019</option>
+      <option value="2020">2020</option>
+      <option value="2021">2021</option>
+    </select>  </div>
+  <div class="col-sm-6"><label >Mois</label>
+  <select class="form-control" id="type"   onChange={handleMonth} required>
+      {months.map(e=>(
+        <option value={e.id}>{e.value}</option>
+      ))}
+    </select>    </div>
+  </div>
+  <div class="form-group mt-3">
+    <label for="cats"> Catégorie</label>
+    <select class="form-control"  onChange={handleSelect}  required>
+    <option disabled selected>selectionner catégorie</option>
+        {cats.map(e=>(
+            <option  value={e.nom}>{e.nom}</option>
+        ))}
+      </select>
+        </div>
+        {(subcats.length!=0)?(
+        <div class="form-group mt-3">
+    <label for="cats"> Sous Catégorie</label>
+    <select class="form-control" id="cats" name="cats"  onChange={handleSubcat} required>
+        <option>selectionner sous catégorie</option>
+        {subcats.map(e=>(
+            <option >{e.nom}</option>
+        ))}
+      </select>
+        </div>):(<area/>)}
+ 
+ 
+     
+</ModalBody>
+<ModalFooter>
+<div class="row">
+<button className="btn btn-danger  col m-3" onClick={handleCloseModal}>Annuler</button>
+<button className="btn btn-success col m-3" onClick={e=>handleSubmit(e)}>Ajouter</button>
 
 </div>
+              
+        
+                 
+                 </ModalFooter>
+
+        </form>
+  </div>
+      </Modal>
+
+</div>
+</main>
   );
       
 }

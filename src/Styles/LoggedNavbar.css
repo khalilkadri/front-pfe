@@ -15,20 +15,20 @@
 
 .loggednav_icon > i {
   font-size: 26px;
-  color: #a5aaad;
+  color: #e7e8e9;
 }
 
 .loggednavbar__left > a {
   margin-right: 30px;
   text-decoration: none;
-  color: #a5aaad;
+  color: #ffffff;
   font-size: 15px;
   font-weight: 700;
 }
 
 .loggednavbar__left .active_link {
-  color: #265acc;
-  border-bottom: 3px solid #265acc;
+  color: #fff;
+  border-bottom: 3px solid #fff;
   padding-bottom: 12px;
 }
 

@@ -5,17 +5,33 @@ import AddCircle from "@material-ui/icons/AddCircle";
 import IconButton from '@material-ui/core/IconButton';
 import Operation_decaisse from './Operation_decaisse';
 import Operation_encaisse from './Operation_encaisse';
-import Objectif from './../Dashboard/Objectif';
+import SettingsIcon from '@material-ui/icons/Settings';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
+import ExitToAppIcon from '@material-ui/icons/ExitToApp';
+import AssessmentOutlinedIcon from '@material-ui/icons/AssessmentOutlined';
+import PersonOutlineOutlinedIcon from '@material-ui/icons/PersonOutlineOutlined';
+import GetAppOutlinedIcon from '@material-ui/icons/GetAppOutlined';
 const LoggedNavbar = ({ sidebarOpen, openSidebar }) => {
-  const navs=[{path:"/category",
-  title:"categories"},
+  const navs=[
   {path:"/dashboard",
   title:"dashboard"},
+  {path:"/category",
+  title:"categories"},
 ]
 const [modalShow, setModalShow] = React.useState(false);
 const [modal,setModal]=React.useState(false)
+const [anchorEl, setAnchorEl] = React.useState(null);
+
+const handleClick = (event) => {
+  setAnchorEl(event.currentTarget);
+};
+
+const handleClose = () => {
+  setAnchorEl(null);
+};
   return (
-    <nav className="loggednavbar">
+    <nav className="loggednavbar" style={{backgroundColor:"blue"}}>
       <div className="loggednav_icon" onClick={() => openSidebar()}>
         <i className="fa fa-bars" aria-hidden="true"></i>
       </div>
@@ -33,11 +49,28 @@ const [modal,setModal]=React.useState(false)
     
         
       
-      <div className="container " >
+      <div className="containerd-flex justify-content-end " >
      <div className=" container ml-auto mb-2 ml-lg-0"> 
-     <IconButton  color="primary"  className="btn" data-toggle="dropdown">
+     <IconButton   style={{color:"white"}} className="btn" data-toggle="dropdown">
          <AddCircle />
      </IconButton> 
+     <IconButton  style={{color:"white"}}  className="btn" onClick={handleClick}>
+<SettingsIcon />
+</IconButton> 
+<Menu
+  id="simple-menu"
+  anchorEl={anchorEl}
+  keepMounted
+  open={Boolean(anchorEl)}
+  onClose={handleClose}
+>
+  <MenuItem onClick={handleClose}><GetAppOutlinedIcon/>Exporter mes données</MenuItem>
+  <MenuItem onClick={handleClose}><PersonOutlineOutlinedIcon/>Profile</MenuItem>
+  <MenuItem><AssessmentOutlinedIcon/>Graphiques</MenuItem>
+  <MenuItem > <NavLink to='/' onClick={()=>localStorage.clear()} style={{textDecoration:"none",color:"red"}}><ExitToAppIcon/>Déconnexion</NavLink>
+</MenuItem>
+</Menu>
+
           <div className="dropdown dropdown-menu">  
           <div className="row">
           <div className="col-sm-6">
@@ -79,6 +112,7 @@ const [modal,setModal]=React.useState(false)
                      </div>
           </div>
         </div>
+        
         <Operation_encaisse
         show={modalShow}
         onHide={() => setModalShow(false)}
@@ -88,7 +122,7 @@ const [modal,setModal]=React.useState(false)
       onHide={()=>setModal(false)}
       />
        
-
+       
         
     
       </div>
