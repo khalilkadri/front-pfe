@@ -20,6 +20,10 @@ import { ModalBody, ModalFooter, ModalTitle } from 'react-bootstrap';
 import { ContactSupportOutlined } from '@material-ui/icons';
 import AddIcon from '@material-ui/icons/Add';
 import prevision from "../../images/prevision.svg";
+import {toast} from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+toast.configure()
+const { forwardRef, useRef, useImperativeHandle } = React;
 
 const useStyles = makeStyles((theme) => ({
 
@@ -82,7 +86,8 @@ function getModalStyle() {
   };
 }
 
-function Objectif(){
+const Objectif=forwardRef((props, ref) => {
+  
 
 const classes = useStyles();
 const [modalStyle] = React.useState(getModalStyle);
@@ -101,33 +106,55 @@ const [subcats,setSubcats]=React.useState([])
 const [cat,setCat]=React.useState('');
 const [subcat,setSubcat]=React.useState('');
 const [cats,setCats]=React.useState([]);
-const [year,setYear]=React.useState('2021')
+const [year,setYear]=React.useState('')
+const [obj,setobj]=React.useState()
+const config= {
+  headers:{
+      Authorization: 'Bearer '+localStorage.getItem('token')
+  }}
 const months=[{id:"0",value:"Janvier"},{id:"1",value:"Février"},{id:"2",value:"Mars"},{id:"3",value:"Avril"},{id:"4",value:"Mai"},
 {id:"5",value:"Juin"},{id:"6",value:"July"},{id:"7",value:"Aout"},{id:"8",value:"Septembre"},{id:"9",value:"Octobre"},{id:"10",value:"Novembre"},{id:"11",value:"Décembre"}]
 useEffect(() => {
   const fetchData = async () => {
-await axios.get('http://127.0.0.1:3333/objectif?year=2021').then(res=>{
+await axios.get('http://127.0.0.1:3333/objectif?year=2021',config).then(res=>{
 setdata(res.data)
 })
-await axios.get('http://127.0.0.1:3333/cat?type=encaissement').then(res=>{
+await axios.get('http://127.0.0.1:3333/cat?type=encaissement',config).then(res=>{
   setCats(res.data.list)
 });
 };
  
 fetchData();
 }, []);
-const handleOpen =(e)=> {
-  e.preventDefault();
+function handleOpen (event,e,item,sid){
+  event.preventDefault()
+  let recherche='year=2021'
+  console.log(e.date,item.categorie,sid.subcategorie)
+  let subcat=(!sid.subcategorie)?(''):(sid.subcategorie)
+  axios.get('http://127.0.0.1:3333/objfetch?year=2021&month='+e.date+'&cat='+item.categorie+'&subcategorie='+sid.subcategorie,config).then(res=>{
+setMontant(res.data.montant)
+setType(res.data.type)
+setYear(res.data.year)
+setMonth(res.data.month)
+setCat(res.data.categorie)
+setSubcategorie(res.data.subcategorie)
+console.log(montant,type)
+})
 
- setOpen(true)
+  setOpen(true)
 
-};
-const handleOpenModal =(e)=> {
-  e.preventDefault();
-
- setOpenModal(true)
-
-};
+let subs=[]
+for(let i of cats)
+{
+  if(i.nom==cat && i.subcategories.length!=0)
+  { 
+    for (let j of i.subcategories)
+    subs.push(j)
+  }
+ 
+}
+setSubcats(subs)
+ };
 const handleCloseModal =(e)=> {
   e.preventDefault();
 
@@ -152,7 +179,13 @@ const handleClose = () => {
 
 };
 
- 
+useImperativeHandle(ref, () => ({
+  setData(year){
+    axios.get(`http://127.0.0.1:3333/objectif?year=${year}`,config).then(res=>{
+  setdata(res.data)
+  })
+  }
+    }));
 
 
 const handleChangeType=(e)=>{
@@ -178,11 +211,7 @@ const handleChangeSubcategorie=(e)=>{
 
 }
 const handleSubmit=(e)=>{
-  const config= {
-    headers:{
-        Authorization: 'Bearer '+localStorage.getItem('token')
-    }
-};
+ 
     e.preventDefault();
     axios.post('http://127.0.0.1:3333/objectif', {
 
@@ -193,7 +222,7 @@ const handleSubmit=(e)=>{
         month:month,
         categorie:cat,
         subcategorie:subcat,
-       },
+       },config
         
 
     )
@@ -206,13 +235,14 @@ const handleSubmit=(e)=>{
 }
 const handleDelete=(e,item)=>{
   e.preventDefault();
-  axios.delete(`http://127.0.0.1:3333/encaisse/${id}`).then(res => {   
+  axios.delete(`http://127.0.0.1:3333/encaisse/${id}`,config).then(res => {   
     let tab=encaissements   
           tab=tab.filter(enc=> enc.id !==id);
           setEncaissements(tab)
 
   })   
   handleClose();
+  toast.error('supprimé avec success',{position:toast.POSITION.BOTTOM_RIGHT})
 
 }
 const handleUpdate=(e)=>{
@@ -225,7 +255,7 @@ const handleUpdate=(e)=>{
   categorie:cat,
   subcategorie:subcat,
 }
-axios.put(`http://127.0.0.1:3333/objectif/${id}`,objectif).then(res=>{
+axios.put(`http://127.0.0.1:3333/objectif/${id}`,objectif,config).then(res=>{
   let tab=encaissements
   for (let i of tab)
     if(i.id===id){
@@ -243,7 +273,7 @@ axios.put(`http://127.0.0.1:3333/objectif/${id}`,objectif).then(res=>{
 const handleYear=(e)=>{
   e.preventDefault()
    setYear(e.target.value)
-    axios.get(`http://127.0.0.1:3333/objectif?year=${e.target.value}`).then(res=>{
+    axios.get(`http://127.0.0.1:3333/objectif?year=${e.target.value}`,config).then(res=>{
   setdata(res.data)
   })
   console.log(year)
@@ -252,6 +282,16 @@ const handleYear=(e)=>{
   const selectType=(e)=>{
 e.preventDefault()
 setType(e.target.value)
+if(e.target.value=='encaissement')
+axios.get('http://127.0.0.1:3333/cat?type=encaissement',config).then(res=>{
+  setCats(res.data.list)
+})
+else if(e.target.value=='decaissement')
+{
+  axios.get('http://127.0.0.1:3333/cat?type=decaissement',config).then(res=>{
+    setCats(res.data.list)
+  })
+}
   }
 const handleSelect=(e)=>{
   e.preventDefault();
@@ -347,7 +387,7 @@ const handleMonth=(e)=>{
            <TableRow>
              <TableCell className={classes.cell}>{sid.subcategorie}</TableCell>
              {sid.sum.map(e=>(
-               <TableCell className={classes.montant}><Button onClick={event=>{handleOpen(event)}}>{e.montant}</Button></TableCell>
+               <TableCell className={classes.montant}><Button onClick={event=>handleOpen(event,e,item,sid)}>{e.montant}</Button></TableCell>
              ))}                             
            </TableRow>
            
@@ -367,7 +407,7 @@ const handleMonth=(e)=>{
             <TableRow style={{backgroundColor: "#e6e6e6"}}>
         <TableCell className={classes.cell}>{item.categorie}</TableCell>
         {item.tab.map(e =>(
-        <TableCell className={classes.montant}><Button onClick={handleOpen}>{e.montant}</Button>
+        <TableCell className={classes.montant}><Button onClick={event=>handleOpen(event,e,item)}>{e.montant}</Button>
                               
       </TableCell>
         ))}
@@ -400,11 +440,11 @@ const handleMonth=(e)=>{
         <div class="row">
         <div class="col-sm-6">
     <label >Montant</label>
-    <input type="number" class="form-control" id="montant"  defaultValue={montant} />
+    <input type="number" class="form-control" id="montant"  value={montant} />
   </div>
     <div class="col-sm-6">
     <label for="type">Type Du Prévision</label>
-    <select class="form-control" id="type" onChange={e=>{selectType(e)}} defaultValue={type} >
+    <select class="form-control" id="type" onChange={e=>{selectType(e)}} value={type} >
       <option value="encaissement">Encaissement</option>
       <option value="decaissement">Décaissement</option>
     </select>
@@ -414,13 +454,13 @@ const handleMonth=(e)=>{
   <div class="row mt-3">
   <div class="col-sm-6">
     <label >Année</label>
-    <select class="form-control" id="type" defaultValue={type} >
+    <select class="form-control" id="type" value={year} >
       <option value="2019">2019</option>
       <option value="2020">2020</option>
       <option value="2021">2021</option>
     </select>  </div>
   <div class="col-sm-6"><label >Mois</label>
-  <select class="form-control" id="type"  >
+  <select class="form-control" id="month" value={month} >
       {months.map(e=>(
         <option value={e.id}>{e.value}</option>
       ))}
@@ -428,7 +468,7 @@ const handleMonth=(e)=>{
   </div>
   <div class="form-group mt-3">
     <label for="cats"> Catégorie</label>
-    <select class="form-control" onChange={handleSelect}   defaultValue={categorie}>
+    <select class="form-control" onChange={handleSelect}   value={cat}>
     <option disabled selected>selectionner catégorie</option>
         {cats.map(e=>(
             <option  value={e.nom}>{e.nom}</option>
@@ -438,7 +478,7 @@ const handleMonth=(e)=>{
         {(subcats.length!=0)?(
         <div class="form-group mt-3">
     <label for="cats"> Sous Catégorie</label>
-    <select class="form-control" id="cats" name="cats" defaultValue={subcategorie}>
+    <select class="form-control" id="cats" name="cats" value={subcategorie}>
         <option>selectionner sous catégorie</option>
         {subcats.map(e=>(
             <option >{e.nom}</option>
@@ -554,5 +594,5 @@ const handleMonth=(e)=>{
 </main>
   );
       
-}
+});
 export default Objectif;

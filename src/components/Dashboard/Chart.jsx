@@ -1,6 +1,6 @@
 
 import axios from 'axios';
-import React, {Component} from 'react' ;
+import React,{useEffect} from 'react';
 import { Bar} from 'react-chartjs-2';
 import chart from "../../images/chart.svg";
 import "../../Styles/Main.css"
@@ -11,31 +11,36 @@ import Objectif from './Objectif';
 import { faThList } from '@fortawesome/free-solid-svg-icons';
 import {Jumbotron} from 'react-bootstrap'
 import Operation_prevision from '../Navbar/Operation_prevision';
-class Chart extends React.Component{
-  constructor(props){
-    super(props)
-    this.enca=React.createRef();
+import AccountBalanceIcon from '@material-ui/icons/AccountBalance';
+import bank from '../../images/bank.svg'
+const { forwardRef, useRef, useImperativeHandle } = React;
 
-    this.state={
-         chartData:{} ,
-         isLoading: false,  
-         error: null, 
-         encaissement:[],
-         decaissement:[],
-         tresory:[],
-         sum_encaisse:0,
-         sum_decaisse:0,
-         year:'',
-         modal:false,
-      } 
+function Chart() {
+ 
+    const [chartData,setChartData]=React.useState({})
+    const [isLoading,setLoading]=React.useState(false)
+    const[error,setError]=React.useState(null)
+    const [year,setYear]=React.useState('')
+    const [modal,setModal]=React.useState(false)
+    const[tresory,setTresory]=React.useState([])
+    const[sum_encaisse,setSumEncaisse]=React.useState(0)
+    const[sum_decaisse,setSumdecaisse]=React.useState(0)
+    const [prevision_actuel,setPrevact]=React.useState('')
+    const [tresorie_actuel,setTresActuel]=React.useState('')
+    const obj_change = useRef();
+    const enc_change = useRef();
+    const dec_change = useRef();
 
-    
-    }
-getEncaissement=(year)=>{
+
+
+const getEncaissement=(year)=>{
   let encaisse=`http://127.0.0.1:3333/encaisse/?year=${year}`
-
-    console.log(year,this.state.tresory)
-  axios.get(encaisse).then(res => {
+  const config= {
+    headers:{
+        Authorization: 'Bearer '+localStorage.getItem('token')
+    }
+};
+  axios.get(encaisse,config).then(res => {
     let encaissement_payes=[]
     let encaissement_engages=[]
     let decaissement_payes=[]
@@ -56,22 +61,28 @@ getEncaissement=(year)=>{
   else{
     tresory.push(i.x)
   }
+  setTresActuel(tresory[mont]/1000)
+
 }
-    this.setState({tresory})
-    
+setTresory(tresory)    
     for(let i of res.data.previsions_encs){
     if(i.date>mont){
     previsons_encs.push(i.montant)}
   else{previsons_encs.push('0')}}
   for(let i of res.data.previsions_decs){
     if(i.date>mont){
-    previsons_decs.push(i.montant)}
-  else{previsons_decs.push('0')}}
+    previsons_decs.push(i.montant)
+  }
+  else{previsons_decs.push('0')}
+  setPrevact((parseFloat(res.data.previsions_encs[mont].montant)-parseFloat(res.data.previsions_decs[mont].montant))/1000)
+}
     for (let dataObj of res.data.encs_payes){
       if(year==this_year)
       {if(dataObj.date<=mont ){
         encaissement_payes.push(dataObj.montant)
-        sum_encaisse+=parseFloat(dataObj.montant)}}
+        sum_encaisse+=parseFloat(dataObj.montant)}
+      }
+
   
   else{
     encaissement_payes.push(dataObj.montant)
@@ -82,16 +93,14 @@ getEncaissement=(year)=>{
       if(year==this_year)
       {if(dataObj.date<=mont ){
         encaissement_engages.push(dataObj.montant)
-        //sum_encaisse+=parseFloat(dataObj.montant)
       }}
   
   else{
     encaissement_engages.push(dataObj.montant)
-      //sum_encaisse+=parseFloat(dataObj.montant)
   }
     }
    
-    this.setState({sum_encaisse:(sum_encaisse/1000)})
+    setSumEncaisse(sum_encaisse/1000)
       for (let dataobj of res.data.decs_payes) 
      {
       if(year==this_year)
@@ -117,9 +126,8 @@ getEncaissement=(year)=>{
       //sum_decaisse+=parseFloat(dataobj.montant)
   }
      }
-      this.setState({sum_decaisse:(sum_decaisse/1000)})
-
-      this.setState({chartData:{     
+    setSumdecaisse(sum_decaisse/1000)
+      setChartData({     
         labels:["Janvier", "Fevrier", "Mars", "Avril", "Mai", "Juin"
       ,"Juillet","Aout","septembre","octobre","novombre", "decembre"], 
      datasets:[
@@ -174,32 +182,34 @@ data:decaissement_payes,
         
     
     
-  ]}})
+  ]})
 })
       
    
 }
 
 
-
-componentDidMount(){
+useEffect(() => {
+  async function fetchData   ()  {
  let date=new Date().getFullYear()
-   this.getEncaissement(date)
-   this.setState({year:date})
-   
-  
+   getEncaissement(date)
+   setYear(date)
+  };
+  fetchData();
+  }, []);
 
-}
-handleYear=(e)=> {
+
+
+const handleYear=(e)=> {
+  getEncaissement(e.target.value)
+  setYear(e.target.value)
+  obj_change.current.setData(e.target.value)
+  enc_change.current.setData(e.target.value)
+  dec_change.current.setData(e.target.value)
  
-    const year= e.target.value
-  this.getEncaissement(year)
-  this.setState({year:e.target.value})
-    
 }
 
-render(){
-  const classes = this.props
+
    
 return(
 <>
@@ -208,14 +218,14 @@ return(
   <div  style={{display: 'flex',  justifyContent:'center', alignItems:'center'}}>
   <form class="form-inline" >
 <label for="years"> veuillez choisir l'année:</label>
-<select class="form-control ml-3" id="years" name="years"  onChange={this.handleYear}>
+<select class="form-control ml-3" id="years" name="years"  onChange={e=>handleYear(e)} >
         <option value="2019">2019</option>
         <option value="2020">2020</option>
         <option value="2021" selected>2021</option>
       </select>
       </form>
       </div>
-      <button className="btn btn-primary " onClick={()=>this.setState({modal:true})}>saisir prévisionnel</button>
+      <button className="btn btn-primary " onClick={()=>setModal(true)}>saisir prévisionnel</button>
 </nav>
       <div className="container container-fluid">
       
@@ -236,7 +246,7 @@ return(
               aria-hidden="true"></i>
             <div className="cardd_inner container">
               <p className="text-primary-p">Trésorerie Du Mois Courant</p>
-              <span className="font-bold text-title">{this.state.tresory[this.state.tresory.length-1]/1000}K</span>
+              <span className="font-bold text-title">{tresorie_actuel}K</span>
             </div>
           </div>
 
@@ -245,7 +255,7 @@ return(
           <div className="cardd col">
           <i class="fa fa-eye aria-hidden=true fa-2x text-green" aria-hidden="true"></i>            <div className="cardd_inner container">
               <p className="text-primary-p">Prévision Du Mois Courant</p>
-              <span className="font-bold text-title">{this.state.sum_decaisse}K</span>
+              <span className="font-bold text-title">{prevision_actuel}K</span>
             </div>
           </div>
 
@@ -269,13 +279,10 @@ return(
   
  
     <div className="container-fluid">
-   <div className="container-fluid row">
- 
-      <div className="col-sm-4 " >
-      </div>
-     <Jumbotron  className="col-sm-6">
-     <Bar  style={{position: 'relative', height:'40vh', width:'80vw'}}
-      data={this.state.chartData}
+   <div className="container-fluid">
+      <Jumbotron  className="col-sm-10">
+     <Bar  width={800} height={200}
+      data={chartData}
       options={{
         responsive: true,
         title: { text: "THICCNESS SCALE", display: true },
@@ -305,19 +312,19 @@ return(
 /></Jumbotron>
 </div>
 <div className="container-fluid">
-<Encaissement year={this.state.year}/>
-<Decaissement/>
-<Objectif/>
+<Encaissement ref={enc_change}/>
+<Decaissement ref={dec_change}/>
+<Objectif ref={obj_change}/>
 </div>
     </div>
     </main>
     <Operation_prevision
-        show={this.state.modal}
-        onHide={() => this.setState({modal:false})}
+        show={modal}
+        onHide={() => setModal(false)}
       />
     </>
     )
-          }
+          
 
 }
 

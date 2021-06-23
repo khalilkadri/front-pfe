@@ -8,10 +8,12 @@ import {useState} from 'react'
 import { SettingsSystemDaydreamSharp } from '@material-ui/icons';
 import Alert from 'react-bootstrap/Alert'
 import { useHistory } from "react-router-dom";
-
+import {toast} from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+toast.configure()
   function Operation_encaisse(props) {
      const cats=[]
-     const [cat,setCat]=React.useState("");
+     const [cat,setCat]=React.useState('');
      const [subcat,setSubcat]=React.useState('')
      const subs=[]
      let history = useHistory();
@@ -24,18 +26,38 @@ import { useHistory } from "react-router-dom";
      const [type,setType]=React.useState('');
      const [facturation,setFacturation]=React.useState('');
      const [reglement,setReglement]=React.useState('');
-     const [memo,setMemo]=React.useState('');
+     const [memo,setMemo]=React.useState();
      const[disabled,setDisabled]=React.useState(true)
      const[disablereglement,setDisablereglement]=React.useState(true)
      const [data, setdata] = React.useState([]);
+     const[intituleError,setIntituleError]=React.useState('')
+     const[TypeError,setTypeError]=React.useState('')
+     const[MontantError,setMontantError]=React.useState('')
+     const[FacturationError,setFacturationError]=React.useState('')
+     const[ReglementError,setReglementError]=React.useState('')
+     const[CategorieError,setCategorieError]=React.useState('')
+     const[SubcatError,setSubcatError]=React.useState('')
+     const [valid,setValid]=React.useState(false)
+     const [first,setFirst]=React.useState('')
+     const config= {
+      headers:{
+          Authorization: 'Bearer '+localStorage.getItem('token')
+      }
+  };
+      
+
+
+
+
+
   
     useEffect(() => {
       async function fetchData   ()  {
-    const response=await fetch('http://127.0.0.1:3333/cat?type=encaissement')
+    const response=await fetch('http://127.0.0.1:3333/cat?type=encaissement',config)
     const body=await response.json()
     for(let i of body.list)
       cats.push(i)
-    
+    setFirst(body.first)
         setSubcats(cats[0].subcategories)
         //setCat(cats[0].nom)
     setItems(cats) };
@@ -43,64 +65,96 @@ import { useHistory } from "react-router-dom";
     console.log(cat,subcats)
     }, []);
   const init=()=>{
-    setType('')
     setIntitule('')
+    setType('')
     setMontant('')
-    setFacturation('')
     setReglement('')
+    setFacturation('')
+    setTva('')
     setCat('')
+    setSubcat('')
+    setTypeError('')
+    setIntituleError('')
+    setMontantError('')
+    setFacturationError('')
+    setReglementError('')
+    setCategorieError('')
     setSubcat('')
     setSubcats([])
     setDisabled(true)
-    setDisablereglement(false)
+    setDisablereglement(true)
+    setValid(false)
   }
    const validate=()=>{
-     if(intitule!=''&&type!=''&&montant!=''&&tva!=''&&facturation!=''&&cat!='')
-     setDisabled(false)
-     else setDisabled(true)
+  if(!intitule||intitule=='')
+  {setIntituleError('champ obligatoire')
+setValid(false)}
+if(intitule!='')
+setIntituleError('')
+  if(type=='')
+  {setTypeError('champ obligatoire')
+  setValid(false)}
+  if(type!='')
+  setTypeError('')
+  if(!montant||montant=='')
+  {setMontantError('champ obligatoire')
+  setValid(false)}
+  if(type=='engagee'&&reglement==''){
+    setValid(false)
+  }
+  if(montant!='')
+  setMontantError('')
+  if(!facturation||facturation=='')
+  {setFacturationError('champ obligatoire')
+  setValid(false)}
+  if(facturation!='')
+  setFacturationError('')
+  if(cat=='')
+  {setCategorieError('champ obligatoire')
+    setValid(false)}
+  if(cat!='')
+  setCategorieError('')
+if(intitule!=''&&type!=''&&montant!=''&&facturation!=''&&cat!='')
+{
+  setValid(true)
+}
    }
     
     const handleChangeIntitule=(e)=>{
       e.preventDefault();
       setIntitule(e.target.value)
-    validate()
     }
     const handleChangeType=(e)=>{
       e.preventDefault();
       setType(e.target.value)
       if(e.target.value=='payee')
       {setDisablereglement(true)
+        setReglement('')
       }
       else if (e.target.value=='engagee')
       setDisablereglement(false)
-      validate()
-    }
+      }
     const handleChangeMontant=(e)=>{
       e.preventDefault();
       setMontant(e.target.value)
-      validate()
-    }
+      }
     const handleChangeTva=(e)=>{
       e.preventDefault();
       setTva(e.target.value)
-      validate()
-    }
+      }
     const handleChangeFacturation=(e)=>{
       e.preventDefault();
       setFacturation(e.target.value)
-      validate()
-    }
+      }
     const handleChangeReglement=(e)=>{
       e.preventDefault();
       setReglement(e.target.value)
-      validate()
-    }
+      }
    
     const handleChangeSubcat=(e)=>{
       e.preventDefault();
       setSubcat(e.target.value)
-      validate()
-    }
+      }
     const handleChangeMemo=(e)=>{
       e.preventDefault();
       setMemo(e.target.value)
@@ -139,43 +193,36 @@ import { useHistory } from "react-router-dom";
       e.preventDefault()
       setType(e.target.value)
     }
-    function submit(e){
-      const config= {
-        headers:{
-            Authorization: 'Bearer '+localStorage.getItem('token')
-        }
-    };
-        e.preventDefault();
-        axios.post("http://127.0.0.1:3333/encaisse"
-        , {
-    
-          user_id:'1',
-            intitule: intitule,
-            montant: montant,
-            tva:tva,
-            type:type,
-            facturation: facturation,
-            reglement:reglement,
-            categorie:cat,
-            subcategorie:subcat,
-            memo:memo}
-            
-    
-        )
-        .then(res=>{
-           init()
-          localStorage.setItem('refresh','true')
-            }
-           
-        )
-      
-    }
     const cancel=(e)=>{
       e.preventDefault()
       props.onHide()
       init()
-    
     }
+    function submit(e){
+      validate()
+    e.preventDefault();
+        console.log(valid,intitule,facturation,montant,type,cat)
+     if(valid)
+        {
+          axios.post('http://127.0.0.1:3333/encaisse',{
+              intitule: intitule,
+              montant: montant,
+              tva:tva,
+              type:type,
+              facturation: facturation,
+              reglement:reglement,
+              categorie:cat,
+              subcategorie:subcat,
+              memo:memo},config).then(res=>{
+                cancel(e)
+              }).catch((error) => {
+                console.error(error)
+              })
+         toast.success('ajouté avec success',{position:toast.POSITION.BOTTOM_RIGHT})
+          }
+      
+    }
+   
     return (
       <>
       <Modal
@@ -193,8 +240,8 @@ import { useHistory } from "react-router-dom";
         <div class="col-sm-6">
     <label >intitulé</label>
     <input type="text" class="form-control"  onChange={e=>handleChangeIntitule(e)} id="intitule" />
-    {(intitule=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>
-):(<area/>)}
+    <div style={{ fontSize: 12, color: "red" }}>{intituleError}</div>
+
 </div>
     <div class="col-sm-6">
     <label for="type">type de l'opération</label>
@@ -203,7 +250,7 @@ import { useHistory } from "react-router-dom";
       <option value="payee">payée</option>
       <option value="engagee">engagée</option>
     </select>
-    {(type=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+  <div style={{ fontSize: 12, color: "red" }}>{TypeError}</div>
 </div>
   </div>
        
@@ -211,7 +258,7 @@ import { useHistory } from "react-router-dom";
   <div class="col-sm-6">
     <label >Montant</label>
     <input type="number" class="form-control" id="montant" onChange={e=>handleChangeMontant(e)}  />
-    {(montant=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+   <div style={{ fontSize: 12, color: "red" }}>{MontantError}</div>
   </div>
   <div class="col-sm-6"><label >TVA</label>
     <input type="number" class="form-control" id="tva" onChange={e=>handleChangeTva(e)}  />
@@ -221,24 +268,25 @@ import { useHistory } from "react-router-dom";
   <div class="col-sm-6">
     <label >Date de facturation</label>
     <input type="date" class="form-control" id="facturation" onChange={e=>handleChangeFacturation(e)}  />
-    {(facturation=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+    <div style={{ fontSize: 12, color: "red" }}>{FacturationError}</div>
   </div>
   <div class="col-sm-6"><label >Date de règlement</label>
     <input type="date" class="form-control" id="reglement" onChange={e=>handleChangeReglement(e)}  disabled={disablereglement}/>    
-    {(!disablereglement)?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+    {(!disablereglement&&reglement=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
 </div>
   </div>
   <div class="form-group mt-3">
     <label for="cats"> Catégorie</label>
+    {(first!="insérez catégorie")?(
     <select class="form-control"   onChange={e=>handleSelect(e)}>
     <option selected disabled>selectionner catégorie</option>
         {items.map(event=>(
             <option  value={event.nom}>{event.nom}</option>
         ))}
-      </select>
-      {(cat=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+      </select>):(<area/>)}
+  <div style={{ fontSize: 12, color: "red" }}>{CategorieError}</div>
         </div>
-        {(subcats.length!=0)?(
+        {(first!="vide")?(
         <div class="form-group mt-3">
     <label for="cats"> Sous Catégorie</label>
     <select class="form-control"  onChange={e=>handleSubcat(e)}>
@@ -263,7 +311,7 @@ import { useHistory } from "react-router-dom";
           <div><button  type="cancel"   class="btn btn-danger border border-primary" onClick={(e)=>cancel(e)}>
                     annuler
                  </button></div>
-                <div> <Button  type="submit"  bg ="success"variant="success" onClick={props.onHide} disabled={disabled}>
+                <div> <Button  type="submit"  bg ="success"variant="success" >
                    Valider
                  </Button></div>
         

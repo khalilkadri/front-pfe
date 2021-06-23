@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
+import axios from 'axios';
 
 
 function  Register() {
@@ -23,7 +24,17 @@ function handle(e){
     console.log(newData)
 }
 
-
+function submit(e){
+  e.preventDefault();
+  axios.post('http://127.0.0.1:3333/signup',{
+      username:Data.username,
+      email: Data.email,
+      password: Data.password,
+      matchpassword:Data.matchpassword,
+      currency:Data.currency,
+      activity:Data.activity,
+  })
+  }
   return (
     <div>
       {currentPage === 1 && (

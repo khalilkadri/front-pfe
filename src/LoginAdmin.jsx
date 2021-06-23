@@ -6,9 +6,9 @@ import { useHistory } from "react-router-dom";
 import {toast} from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 toast.configure()
-export default function Login() {
+export default function LoginAdmin() {
   const [modalShow, setModalShow] = React.useState(false);
-  const url="http://127.0.0.1:3333/login"
+  const url="http://127.0.0.1:3333/admin"
   let history = useHistory();
   const [Data,setData]= useState({
     
@@ -29,7 +29,7 @@ export default function Login() {
     .then(res=>{
         localStorage.setItem('token',res.data.token.token)
         console.log(localStorage.getItem("token"))
-      history.push('/Dashboard')
+      history.push('/Admin')
       toast.success('vous etes connecté!',{position:toast.POSITION.BOTTOM_RIGHT})
     }
 
@@ -85,14 +85,6 @@ function handle(e){
                 <button className="btn btn-outline-primary" type="submit">
                   se connecter
                 </button>
-                <NavLink
-                       
-                       className="nav-link"
-                       to="/login"
-                      onClick={() => setModalShow(true)}
-                     >
-                       inscrivez vous?
-                     </NavLink>
               </div>
             </form>
            
@@ -100,10 +92,6 @@ function handle(e){
      
         </div>
       </div>
-      <Signup
-        show={modalShow}
-        onHide={() => setModalShow(false)}
-      />
       
     </>
   );

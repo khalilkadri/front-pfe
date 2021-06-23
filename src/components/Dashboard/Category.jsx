@@ -26,7 +26,10 @@ const styles = theme => ({
         paddingLeft: theme.spacing.unit * 4
     }
 });
-
+const config= {
+    headers:{
+        Authorization: 'Bearer '+localStorage.getItem('token')
+    }};
 
 class Category extends React.Component {
     state = {data:[],
@@ -36,6 +39,7 @@ class Category extends React.Component {
          update:'',
          type:'',
          ajouter:false,
+         first:''
 };
 /*handleClickMenu (event) {
     event.preventDefault();
@@ -47,51 +51,28 @@ class Category extends React.Component {
     this.setState({anchorEl:false});
   };*/
   componentDidMount(){
-    axios.get('http://127.0.0.1:3333/cat?type=encaissement').then(res=>{
+    let config= {
+        headers:{
+            Authorization: 'Bearer '+localStorage.getItem('token')
+        }};
+    axios.get('http://127.0.0.1:3333/cat?type=encaissement',config).then(res=>{
         console.log(res.data)
-     this.setState({data: res.data.list,cid:parseInt(res.data.ids.cid),sid:parseInt(res.data.ids.sid)})
+        if(res.data.length!=0)
+     this.setState({data: res.data.list,cid:parseInt(res.data.ids.cid),sid:parseInt(res.data.ids.sid),type:'encaissement',first:res.data.first})
        })  
   }
     
-      
-    handleSubmit = event => {
-        event.preventDefault();
-        
-        const cat = {
-            user_id:"1",
-          nom: this.state.name,
-          show:false,
-          type:this.state.type 
-        }
-    
-        let id=(parseInt(this.state.cid,10)+1)
-        this.setState({cid:id});
-       
-        axios.post('http://127.0.0.1:3333/cat', cat )
-          .then(res=>{
-            let objcat={
-                nom:this.state.name,
-                id:(parseInt(this.state.cid,10)),
-                show:false,
-                subcategories:[]
-            }
-            this.setState({data:[...this.state.data,objcat]});
-            this.setState({name:''})
-            console.log(this.state.data)
-          })
-          this.handleCloseAjouter()
-      }
+  
       handleSubmitSubcat(event,id) {
         event.preventDefault();
         let subcat = {
-            user_id:"1",
             cat_id:id,
           nom: this.state.name,
         }
 
         let myid=(parseInt(this.state.sid,10)+1)
         this.setState({sid:myid});
-        axios.post('http://127.0.0.1:3333/subcat', subcat )
+        axios.post('http://127.0.0.1:3333/subcat', subcat,config )
           .then(res=>{
               let objsub={
                   cat_id:id,
@@ -112,7 +93,6 @@ class Category extends React.Component {
             }
             this.setState({data:tab})
             this.setState({name:''})
-            console.log(this.state.data)
           })
       }
     handleChange (event){
@@ -120,16 +100,17 @@ class Category extends React.Component {
         this.setState({ name: event.target.value});
       }
       handleTabEncaissement = (event) =>{
-        axios.get('http://127.0.0.1:3333/cat?type=encaissement').then(res=>{
-            console.log(res.data)
+        axios.get('http://127.0.0.1:3333/cat?type=encaissement',config).then(res=>{
          this.setState({data: res.data.list,type:'encaissement',cid:parseInt(res.data.ids.cid),sid:parseInt(res.data.ids.sid)})
+         console.log(this.state.type)
            }) 
 
       };
       handleTabDecaissement = (event) =>{
-        axios.get('http://127.0.0.1:3333/cat?type=decaissement').then(res=>{
-            console.log(res.data)
+        axios.get('http://127.0.0.1:3333/cat?type=decaissement',config).then(res=>{
          this.setState({data: res.data.list,type:'decaissement',cid:parseInt(res.data.ids.cid),sid:parseInt(res.data.ids.sid)})
+         console.log(this.state.type)
+
            }) 
 
       };
@@ -139,7 +120,7 @@ class Category extends React.Component {
           const cat = {
           nom: this.state.name
         }
-        axios.put(`http://127.0.0.1:3333/cat/${id}`,cat).then(res=>{
+        axios.put(`http://127.0.0.1:3333/cat/${id}`,cat,config).then(res=>{
        let tab=this.state.data;     
         for (let i of tab)
             { if(i.id===id){
@@ -157,7 +138,7 @@ class Category extends React.Component {
         const subcat = {
         nom: this.state.name
       }
-      axios.put(`http://127.0.0.1:3333/subcat/${sid}`,subcat).then(res=>{
+      axios.put(`http://127.0.0.1:3333/subcat/${sid}`,subcat,config).then(res=>{
      let tab=this.state.data;     
       for (let i of tab)
            if(i.id===id){
@@ -183,7 +164,7 @@ class Category extends React.Component {
 
     
     deleteRow(id,e){  
-        axios.delete(`http://127.0.0.1:3333/cat/${id}`)  
+        axios.delete(`http://127.0.0.1:3333/cat/${id}`,config)  
           .then(res => {  
             
         
@@ -194,7 +175,7 @@ class Category extends React.Component {
       }  
       deleteSub(e,sid,id){  
           e.preventDefault();
-        axios.delete(`http://127.0.0.1:3333/subcat/${sid}`)  
+        axios.delete(`http://127.0.0.1:3333/subcat/${sid}`,config)  
           .then(res => {  
             let tab=this.state.data
             for ( let i of tab)
@@ -264,26 +245,180 @@ handleAjouter(e){
     this.setState({ajouter:true})
 }
 handleCloseAjouter(e){
-    e.preventDefault();
     this.setState({ajouter:false})
 }
+    
+handleSubmit = event => {
+    event.preventDefault();
+    
+
+    let id=(parseInt(this.state.cid,10)+1)
+    this.setState({cid:id});
+   
+    axios.post('http://127.0.0.1:3333/cat', { nom: this.state.name,type:this.state.type },config )
+      .then(res=>{
+        console.log(this.state.type)
+        let objcat={
+            nom:this.state.name,
+            id:(parseInt(this.state.cid,10)),
+            show:false,
+            type:this.state.type,
+            subcategories:[]
+        }
+        this.setState({data:[...this.state.data,objcat]});
+        this.setState({name:''})
+        console.log(this.state.data)
+      })
+      this.handleCloseAjouter()
+  }
       
   render() {
           const items = this.state.data;
           const { classes } = this.props;
           console.log(this.state.type)
+          const map_tab=items.map(item => {
+            return (
+              <div key={item.id}>
+                <List>
+                        
+                                {(this.state.first!="vide" && item.subcategories.length != 0)? (
+                                    <div className="container mr-5">
+                                        <ListItem key={item.id}
+                                        >
+                                            {item.show ===false ?(<ListItemText
+                                                primary={item.nom}
+                                            />):(<form key={item.id} onSubmit={(e)=>this.handleUpdate(item.id,e)}><input type="text" class="form-control form-control-sm" name="update" defaultValue={this.state.name} onChange={(e)=>this.handleChange(e)} />
+                                            <button type="cancel">cancel</button>
+                                            </form>)}
+                                           <div className="container ml-5">
+                                               
+                                         <Button key={item.id} onClick={(e)=>this.handleshowSubCat(e,item.id)}><AddCircle/></Button>
+                                         <Button key={item.id} onClick={(e)=>this.handleshowCat(e,item.id)}><Edit/></Button>
+                                         <Button key={item.id} onClick={(e)=>this.deleteRow(item.id,e)}><Delete/></Button>
+                                    
+                                         
+                                            {this.state[item.nom] ? (
+                                               
+                                                <ExpandLess  button
+                                                onClick={this.handleClick.bind(
+                                                    this,
+                                                    item.nom
+                                                )}
+                                                key={item.id}/>
+                                            ) : (
+                                                <ExpandMore  button
+                                                onClick={this.handleClick.bind(
+                                                    this,
+                                                    item.nom
+                                                )}
+                                                key={item.id}/>
+                                            )}
+                                            </div>
+                                        </ListItem>
+                                        
+                                        <Collapse
+                                            key={item.id}
+                                            component="li"
+                                            in={this.state[item.nom]}
+                                            timeout="auto"
+                                            unmountOnExit
+                                        >
+                                            <List disablePadding>
+                                                {item.subcategories.map(
+                                                    sitem => {
+                                                        return (
+                                                            <ListItem
+                                                                button
+                                                                key={
+                                                                    sitem.id
+                                                                }
+                                                                className={
+                                                                    classes.nested
+                                                                }
+                                                            >{sitem.show===false?(<ListItemText
+                                                              key={
+                                                                  sitem.id
+                                                              }
+                                                              primary={
+                                                                  sitem.nom
+                                                              }
+                                                          />)
+                                                          :(<form key={sitem.id} onSubmit={(e)=>this.handleUpdateSub(sitem.id,item.id,e)}><input type="text" class="form-control form-control-sm" name="updatesub" defaultValue={sitem.nom}onChange={(e)=>this.handleChange(e)}/></form>)
+                                                          }
+                                                               
+                                                                
+                                                                <div className="container ml-5">
+                                                     <Button key={sitem.id} onClick={(e)=>this.handleShowUpdateSub(e,item.id,sitem.id)}><Edit/></Button>
+                                         <Button key={sitem.id} onClick={(e)=>this.deleteSub(e,sitem.id,item.id)}><Delete/></Button>
+                                         </div>                                                   <Divider key={sitem.id} absolute />
+
+                                                            </ListItem>
+                                                            
+                                                        );
+                                                    }
+                                                )
+                                                
+                                                }
+                                                
+                                              {item.add===true ?
+                                              ( <ListItem>
+                                               <form key={item.id} onSubmit={(e)=>this.handleSubmitSubcat(e,item.id)}>
+                                                   <input type="text" class="form-control form-control-sm" name="addsub" onChange={(e)=>this.handleChange(e)}placeholder="ajouter sous-catégorie"/></form></ListItem>)
+                                                   :(<area/>)}
+                                                   
+
+
+                                            </List>
+                                        </Collapse>{" "}
+                                    </div>
+                                ) : (<List>
+                                        <ListItem key={item.id}
+                                        >
+                                            {item.show ===false ?(<ListItemText
+                                                primary={item.nom}
+                                            />):(<form key={item.id} onSubmit={(e)=>this.handleUpdate(item.id,e)}><input class="form-control form-control-sm"type="text" name="update" defaultValue={item.nom} onChange={(e)=>this.handleChange(e)}/></form>)}
+                                           <div className="container ml-5">
+                                               
+                                           <Button key={item.id} onClick={(e)=>this.handleshowSubCat(e,item.id)}><AddCircle/></Button>
+                                         <Button key={item.id} onClick={(e)=>this.handleshowCat(e,item.id)}><Edit/></Button>
+                                         <Button key={item.id} onClick={(e)=>this.deleteRow(item.id,e)}><Delete/></Button>
+                                         
+                                                                  </div>
+                                                                  </ListItem>
+                                                                  {item.add===true ?
+                                              ( <ListItem>
+                                               <form key={item.id} onSubmit={(e)=>this.handleSubmitSubcat(e,item.id)}>
+                                                   <input type="text" class="form-control form-control-sm" name="addsub" onChange={(e)=>this.handleChange(e)}placeholder="ajouter sous-catégorie"/></form></ListItem>)
+                                                   :(<area/>)}
+                                                                  </List>   
+                                                                  
+                                )}
+                            <Divider key={item.id} absolute />
+                </List>
+                            </div>
+                       
+                    
+                   
+            );
+        })
           return (
-              
+              <div>
             <div className="w-75">
             <div className="container mt-5 mx-auto " style={{display:"flex",justifyContent:"center",alignItems:"center"}}>
-              <ul className="container nav nav-tabs ">
-              <li className="nav-item nav-link" onClick={e=>{this.handleTabEncaissement(e)}}>Encaissement</li>
-              <li className="nav-item nav-link" onClick={e=>{this.handleTabDecaissement(e)}}>Decaissement</li>
+              <ul className="container nav nav-pills" role="tablist">
+              <li className="nav-item " onClick={e=>{this.handleTabEncaissement(e)}}><a className="nav-link active" data-toggle="pill">Encaissement</a></li>
+              <li className="nav-item " onClick={e=>{this.handleTabDecaissement(e)}}><a className="nav-link" data-toggle="pill">Decaissement</a></li>
               </ul>
+            
               </div>
 
               <div>
-                  <div className="container mt-5">
+                 
+            
+              </div>
+              <div className="container">{(items.length!=0)?(map_tab):(<area/>)}</div>
+              <div className="container d-flex justify-content-start mt-5">
+                  
                       {(this.state.ajouter===false)?(
                       <button className="btn btn-primary" onClick={e=>{this.handleAjouter(e)}}><AddIcon/>ajouter catégorie</button>):
                       (<form class="form-inline" >
@@ -293,135 +428,8 @@ handleCloseAjouter(e){
                       </form>
                       )}
                   </div>
-                  {items.map(item => {
-                      return (
-                        <div key={item.id}>
-                          <List>
-                                  
-                                          {item.subcategories.length != 0 ? (
-                                              <div className="container mr-5">
-                                                  <ListItem key={item.id}
-                                                  >
-                                                      {item.show ===false ?(<ListItemText
-                                                          primary={item.nom}
-                                                      />):(<form key={item.id} onSubmit={(e)=>this.handleUpdate(item.id,e)}><input type="text" class="form-control form-control-sm" name="update" defaultValue={this.state.name} onChange={(e)=>this.handleChange(e)} />
-                                                      <button type="cancel">cancel</button>
-                                                      </form>)}
-                                                     <div className="container ml-5">
-                                                         
-                                                   <Button key={item.id} onClick={(e)=>this.handleshowSubCat(e,item.id)}><AddCircle/></Button>
-                                                   <Button key={item.id} onClick={(e)=>this.handleshowCat(e,item.id)}><Edit/></Button>
-                                                   <Button key={item.id} onClick={(e)=>this.deleteRow(item.id,e)}><Delete/></Button>
-                                              
-                                                   
-                                                      {this.state[item.nom] ? (
-                                                         
-                                                          <ExpandLess  button
-                                                          onClick={this.handleClick.bind(
-                                                              this,
-                                                              item.nom
-                                                          )}
-                                                          key={item.id}/>
-                                                      ) : (
-                                                          <ExpandMore  button
-                                                          onClick={this.handleClick.bind(
-                                                              this,
-                                                              item.nom
-                                                          )}
-                                                          key={item.id}/>
-                                                      )}
-                                                      </div>
-                                                  </ListItem>
-                                                  
-                                                  <Collapse
-                                                      key={item.id}
-                                                      component="li"
-                                                      in={this.state[item.nom]}
-                                                      timeout="auto"
-                                                      unmountOnExit
-                                                  >
-                                                      <List disablePadding>
-                                                          {item.subcategories.map(
-                                                              sitem => {
-                                                                  return (
-                                                                      <ListItem
-                                                                          button
-                                                                          key={
-                                                                              sitem.id
-                                                                          }
-                                                                          className={
-                                                                              classes.nested
-                                                                          }
-                                                                      >{sitem.show===false?(<ListItemText
-                                                                        key={
-                                                                            sitem.id
-                                                                        }
-                                                                        primary={
-                                                                            sitem.nom
-                                                                        }
-                                                                    />)
-                                                                    :(<form key={sitem.id} onSubmit={(e)=>this.handleUpdateSub(sitem.id,item.id,e)}><input type="text" class="form-control form-control-sm" name="updatesub" defaultValue={sitem.nom}onChange={(e)=>this.handleChange(e)}/></form>)
-                                                                    }
-                                                                         
-                                                                          
-                                                                          <div className="container ml-5">
-                                                               <Button key={sitem.id} onClick={(e)=>this.handleShowUpdateSub(e,item.id,sitem.id)}><Edit/></Button>
-                                                   <Button key={sitem.id} onClick={(e)=>this.deleteSub(e,sitem.id,item.id)}><Delete/></Button>
-                                                   </div>                                                   <Divider key={sitem.id} absolute />
-
-                                                                      </ListItem>
-                                                                      
-                                                                  );
-                                                              }
-                                                          )
-                                                          
-                                                          }
-                                                          
-                                                        {item.add===true ?
-                                                        ( <ListItem>
-                                                         <form key={item.id} onSubmit={(e)=>this.handleSubmitSubcat(e,item.id)}>
-                                                             <input type="text" class="form-control form-control-sm" name="addsub" onChange={(e)=>this.handleChange(e)}placeholder="ajouter sous-catégorie"/></form></ListItem>)
-                                                             :(<area/>)}
-                                                             
-
-
-                                                      </List>
-                                                  </Collapse>{" "}
-                                              </div>
-                                          ) : (<List>
-                                                  <ListItem key={item.id}
-                                                  >
-                                                      {item.show ===false ?(<ListItemText
-                                                          primary={item.nom}
-                                                      />):(<form key={item.id} onSubmit={(e)=>this.handleUpdate(item.id,e)}><input class="form-control form-control-sm"type="text" name="update" defaultValue={item.nom} onChange={(e)=>this.handleChange(e)}/></form>)}
-                                                     <div className="container ml-5">
-                                                         
-                                                     <Button key={item.id} onClick={(e)=>this.handleshowSubCat(e,item.id)}><AddCircle/></Button>
-                                                   <Button key={item.id} onClick={(e)=>this.handleshowCat(e,item.id)}><Edit/></Button>
-                                                   <Button key={item.id} onClick={(e)=>this.deleteRow(item.id,e)}><Delete/></Button>
-                                                   
-                                                                            </div>
-                                                                            </ListItem>
-                                                                            {item.add===true ?
-                                                        ( <ListItem>
-                                                         <form key={item.id} onSubmit={(e)=>this.handleSubmitSubcat(e,item.id)}>
-                                                             <input type="text" class="form-control form-control-sm" name="addsub" onChange={(e)=>this.handleChange(e)}placeholder="ajouter sous-catégorie"/></form></ListItem>)
-                                                             :(<area/>)}
-                                                                            </List>   
-                                                                            
-                                          )}
-                                      <Divider key={item.id} absolute />
-                          </List>
-                                      </div>
-                                 
-                              
-                             
-                      );
-                  })}
               </div>
-  
               </div>
-             
           );
       }
 }

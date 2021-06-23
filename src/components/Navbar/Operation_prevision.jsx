@@ -9,7 +9,9 @@ import Alert from 'react-bootstrap/Alert'
 import { useHistory } from "react-router-dom";
 import { withStyles,makeStyles } from '@material-ui/core/styles';
 import TrackChangesIcon from '@material-ui/icons/TrackChanges';
-
+import {toast} from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+toast.configure()
 const useStyles = makeStyles((theme) => ({
 
     root: {
@@ -73,26 +75,39 @@ function getModalStyle() {
 function Operation_prevision(props){
     const classes = useStyles();
     const [modalStyle] = React.useState(getModalStyle);
-const [openModal, setOpenModal] = React.useState(false);
-const [id,setID]=React.useState();
-const [montant,setMontant]=React.useState('');
-const [type,setType]=React.useState('');
-const [categorie,setCategorie]=React.useState('');
-const [subcategorie,setSubcategorie]=React.useState('');
-const [data, setdata] = React.useState([]);
-const [subcats,setSubcats]=React.useState([])
-const [cat,setCat]=React.useState('');
-const [subcat,setSubcat]=React.useState('');
-const [cats,setCats]=React.useState([]);
-const [year,setYear]=React.useState('')
-const[month,setMonth]=React.useState('')
-const[disabled,setDisabled]=React.useState(true)
-const months=[{id:"0",value:"Janvier"},{id:"1",value:"Février"},{id:"2",value:"Mars"},{id:"3",value:"Avril"},{id:"4",value:"Mai"},
+     const [openModal, setOpenModal] = React.useState(false);
+     const [id,setID]=React.useState();
+     const [montant,setMontant]=React.useState('');
+     const [type,setType]=React.useState('');
+     const [categorie,setCategorie]=React.useState('');
+     const [subcategorie,setSubcategorie]=React.useState('');
+     const [data, setdata] = React.useState([]);
+     const [subcats,setSubcats]=React.useState([])
+     const [cat,setCat]=React.useState('');
+     const [subcat,setSubcat]=React.useState('');
+     const [cats,setCats]=React.useState([]);
+     const [year,setYear]=React.useState('')
+     const[month,setMonth]=React.useState('')
+     const[TypeError,setTypeError]=React.useState('')
+     const[MontantError,setMontantError]=React.useState('')
+     const[MonthError,setMonthError]=React.useState('')
+     const[YearError,setYearError]=React.useState('')
+     const[CategorieError,setCategorieError]=React.useState('')
+     const[SubcatError,setSubcatError]=React.useState('')
+     const [valid,setValid]=React.useState(false)
+     const [first,setFirst]=React.useState('')
+     const config= {
+      headers:{
+          Authorization: 'Bearer '+localStorage.getItem('token')
+      }};
+    const months=[{id:"0",value:"Janvier"},{id:"1",value:"Février"},{id:"2",value:"Mars"},{id:"3",value:"Avril"},{id:"4",value:"Mai"},
 {id:"5",value:"Juin"},{id:"6",value:"July"},{id:"7",value:"Aout"},{id:"8",value:"Septembre"},{id:"9",value:"Octobre"},{id:"10",value:"Novembre"},{id:"11",value:"Décembre"}]
 useEffect(() => {
     const fetchData = async () => {
-  await axios.get('http://127.0.0.1:3333/cat?type=encaissement').then(res=>{
+  await axios.get('http://127.0.0.1:3333/cat?type=encaissement',config).then(res=>{
     setCats(res.data.list)
+    let firt=""
+    setFirst(firt)
   });
   };
    
@@ -100,31 +115,61 @@ useEffect(() => {
   }, []);
 
   const validate=()=>{
-    if(type!=''&&montant!=''&&year!=''&&month!=''&&cat!='')
-    setDisabled(false)
-    else setDisabled(true)
+    if(type=='')
+    {setTypeError('champ obligatoire')
+    setValid(false)}
+    if(type!='')
+    setTypeError('')
+    if(!montant||montant=='')
+    {setMontantError('champ obligatoire')
+    setValid(false)}
+    if(montant!='')
+    setMontantError('')
+    if(!month||month=='')
+    {setMonthError('champ obligatoire')
+    setValid(false)}
+    if(month!='')
+    setMonthError('')
+    if(!year||year=='')
+    {setYearError('champ obligatoire')
+    setValid(false)}
+    if(year!='')
+    setYearError('')
+    if(cat=='')
+    {setCategorieError('champ obligatoire')
+      setValid(false)}
+    if(cat!='')
+    setCategorieError('')
+  if(type!=''&&montant!=''&&month!=''&&year!=''&&cat!='')
+  {
+    setValid(true)
   }
+     }
   const handleChangeMontant=(e)=>{
     e.preventDefault();
     setMontant(e.target.value)
-    validate()
   
   }
   const selectType=(e)=>{
     e.preventDefault()
     setType(e.target.value)
-    validate()
+    if(e.target.value=='encaissement'){
+       axios.get('http://127.0.0.1:3333/cat?type=encaissement',config).then(res=>{
+    setCats(res.data.list)
+    })}
+    else if(e.target.value=='decaissement'){
+       axios.get('http://127.0.0.1:3333/cat?type=decaissement',config).then(res=>{
+    setCats(res.data.list)
+    })}
       }
   
   const handleYear=(e)=>{
     e.preventDefault()
     setYear(e.target.value)
-    validate()
   }
   const handleMonth=(e)=>{
     e.preventDefault()
     setMonth(e.target.value)   
-     validate()
   }
   const handleClose=(e)=>{
     e.preventDefault()
@@ -133,30 +178,36 @@ useEffect(() => {
   }
 
   const init=()=>{
-      setMontant('')
-      setType('')
-      setYear('')
-      setMonth('')
-      setCat('')
-      setSubcat('')
+    setType('')
+    setMontant('')
+    setMonth('')
+    setYear('')
+    setCat('')
+    setSubcat('')
+    setTypeError('')
+    setMontantError('')
+    setMonthError('')
+    setYearError('')
+    setCategorieError('')
+    setSubcat('')
+    setSubcats([])
+    setValid(false)
   }
   const handleSubmit=(e)=>{
-    const config= {
-      headers:{
-          Authorization: 'Bearer '+localStorage.getItem('token')
-      }
-  };
+    validate()
+
       e.preventDefault();
+      if(valid)
+        {
       axios.post('http://127.0.0.1:3333/objectif', {
   
-        user_id:'1',
           montant:montant,
           type:type,
           year:year,
           month:month,
           categorie:cat,
           subcategorie:subcat,
-         },
+         },config,
           
   
       )
@@ -164,6 +215,8 @@ useEffect(() => {
         handleClose(e)
           }
       )
+      toast.success('ajouté avec success',{position:toast.POSITION.BOTTOM_RIGHT})
+    }
     
   }
   
@@ -182,7 +235,6 @@ useEffect(() => {
     }
     setSubcats(subs)
     console.log(cat,subcats)
-    validate()
   }
   const handleSubcat=(e)=>{
     e.preventDefault()
@@ -199,13 +251,13 @@ useEffect(() => {
           <TrackChangesIcon style={{color:"blue"}}/>Ajouter Prévision          
           </Modal.Title>
         </Modal.Header>
-        <form  >
+        <form  onSubmit={(e)=>handleSubmit(e)}>
         <Modal.Body>
         <div class="row">
         <div class="col-sm-6">
     <label >Montant</label>
     <input type="number" class="form-control" id="montant"  onChange={handleChangeMontant}/>
-    {(montant=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+    <div style={{ fontSize: 12, color: "red" }}>{MontantError}</div>
 
   </div>
     <div class="col-sm-6">
@@ -215,7 +267,7 @@ useEffect(() => {
       <option value="encaissement">Encaissement</option>
       <option value="decaissement">Décaissement</option>
     </select>
-    {(type=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+    <div style={{ fontSize: 12, color: "red" }}>{TypeError}</div>
 </div>
   </div>
        
@@ -228,7 +280,7 @@ useEffect(() => {
       <option value="2020">2020</option>
       <option value="2021">2021</option>
     </select> 
-    {(year=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+    <div style={{ fontSize: 12, color: "red" }}>{YearError}</div>
  </div>
   <div class="col-sm-6"><label >Mois</label>
   <select class="form-control" id="type"   onChange={handleMonth} required>
@@ -237,19 +289,22 @@ useEffect(() => {
         <option value={e.id}>{e.value}</option>
       ))}
     </select>   
-    {(month=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+    <div style={{ fontSize: 12, color: "red" }}>{MonthError}</div>
  </div>
   </div>
+  {(first!="")?(
   <div class="form-group mt-3">
     <label for="cats"> Catégorie</label>
+    
     <select class="form-control"  onChange={handleSelect}  required>
     <option disabled selected>selectionner catégorie</option>
+    
         {cats.map(e=>(
             <option  value={e.nom}>{e.nom}</option>
         ))}
       </select>
-      {(cat=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
-        </div>
+      <div style={{ fontSize: 12, color: "red" }}>{CategorieError}</div>
+        </div>):(<area/>)}
         {(subcats.length!=0)?(
         <div class="form-group mt-3">
     <label for="cats"> Sous Catégorie</label>
@@ -259,16 +314,17 @@ useEffect(() => {
             <option >{e.nom}</option>
         ))}
       </select>
-      {(subcat=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+      <div style={{ fontSize: 12, color: "red" }}>{SubcatError}</div>
         </div>):(<area/>)}
      
 </Modal.Body>
 <Modal.Footer>
-<div class="row">
-<button className="btn btn-danger  col m-3" onClick={e=>handleClose(e)}>Annuler</button>
-<button className="btn btn-success col m-3" onClick={e=>handleSubmit(e)} disabled={disabled}>Ajouter</button>
-
+<div><button type="cancel"   class="btn btn-danger border border-primary"  onClick={e=>handleClose(e)}>Annuler</button>
 </div>
+                <div> <Button  type="submit"  bg ="success"variant="success" >
+                   Valider
+                 </Button></div>
+
               
         
                  

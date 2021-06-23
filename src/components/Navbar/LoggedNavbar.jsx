@@ -15,9 +15,11 @@ import GetAppOutlinedIcon from '@material-ui/icons/GetAppOutlined';
 const LoggedNavbar = ({ sidebarOpen, openSidebar }) => {
   const navs=[
   {path:"/dashboard",
-  title:"dashboard"},
+  title:"Dashboard"},
+  {path:"/engages",
+  title:"Engagés"},
   {path:"/category",
-  title:"categories"},
+  title:"Catégories"},
 ]
 const [modalShow, setModalShow] = React.useState(false);
 const [modal,setModal]=React.useState(false)
@@ -65,8 +67,21 @@ const handleClose = () => {
   onClose={handleClose}
 >
   <MenuItem onClick={handleClose}><GetAppOutlinedIcon/>Exporter mes données</MenuItem>
-  <MenuItem onClick={handleClose}><PersonOutlineOutlinedIcon/>Profile</MenuItem>
-  <MenuItem><AssessmentOutlinedIcon/>Graphiques</MenuItem>
+  <MenuItem onClick={handleClose}><PersonOutlineOutlinedIcon/><NavLink
+        exact
+        to={"/profil"}
+        style={{textDecoration:"none",color:"black"}}
+      >
+        Profile
+      </NavLink></MenuItem>
+      <MenuItem onClick={handleClose}><AssessmentOutlinedIcon/><NavLink
+        exact
+        to={"/graphiques"}
+        style={{textDecoration:"none",color:"black"}}
+      >
+        Graphiques
+      </NavLink></MenuItem>
+  <MenuItem></MenuItem>
   <MenuItem > <NavLink to='/' onClick={()=>localStorage.clear()} style={{textDecoration:"none",color:"red"}}><ExitToAppIcon/>Déconnexion</NavLink>
 </MenuItem>
 </Menu>

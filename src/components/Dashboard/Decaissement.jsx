@@ -20,6 +20,10 @@ import ModalHeader from 'react-bootstrap/esm/ModalHeader';
 import { ModalBody, ModalFooter, ModalTitle } from 'react-bootstrap';
 import { ContactSupportOutlined } from '@material-ui/icons';
 import decaissement from "../../images/decaissement.svg";
+import {toast} from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+toast.configure()
+const { forwardRef, useRef, useImperativeHandle } = React;
 
 const useStyles = makeStyles((theme) => ({
 
@@ -57,11 +61,16 @@ const useStyles = makeStyles((theme) => ({
   cell:{
     minWidth:232,
   },
- 
-  montant:{
-    minWidth:132,
-    textAlign:'center',
-  }
+  sum:{  minWidth:132,
+    textAlign:'center',},
+    montant:{
+      minWidth:132,
+      textAlign:'center',
+      "&:hover": {
+        backgroundColor: "#cfcfcf",
+        cursor: "pointer",
+      },
+    }
 }))
 
 
@@ -82,8 +91,7 @@ function getModalStyle() {
   };
 }
 
-function Decaissement(props){
- 
+const Decaissement=forwardRef((props, ref) => { 
 
 
 const [color, setColor] = React.useState("");
@@ -107,12 +115,24 @@ const [subs,setSubs]=React.useState(false);
 const [decaissements,setDecaissements]=React.useState([]);
 const [month_year,setMonth_year]=React.useState();
 const [subcats,setSubcats]=React.useState([])
-const [cat,setCat]=React.useState('abonnements');
+const [cat,setCat]=React.useState('');
 const [cats,setCats]=React.useState([]);
 const [year,setYear]=React.useState('2021')
 const[disabled,setDisabled]=React.useState(true)
 const[disablereglement,setDisablereglement]=React.useState(true)
 const[success,setSuccess]=React.useState(false)
+const[intituleError,setIntituleError]=React.useState('')
+    const[TypeError,setTypeError]=React.useState('')
+    const[MontantError,setMontantError]=React.useState('')
+    const[FacturationError,setFacturationError]=React.useState('')
+    const[ReglementError,setReglementError]=React.useState('')
+    const[CategorieError,setCategorieError]=React.useState('')
+    const[SubcatError,setSubcatError]=React.useState('')
+    const [valid,setValid]=React.useState(false)
+const config= {
+  headers:{
+      Authorization: 'Bearer '+localStorage.getItem('token')
+  }}
 const style2 = {
   cursor: "pointer" ,
   backgroundColor:color
@@ -123,29 +143,31 @@ useEffect(() => {
     console.log(props.onYearChange)
     setYear(props.onYearChange)
  
-const result=await axios.get('http://127.0.0.1:3333/dec-month?year=2021')
+const result=await axios.get('http://127.0.0.1:3333/dec-month?year=2021',config)
 setdata(result.data)
 console.log(data)
 let opts=[]
-const res=await axios.get('http://127.0.0.1:3333/cat?type=decaissement')
+const res=await axios.get('http://127.0.0.1:3333/cat?type=decaissement',config)
   setCats(res.data.list)
   console.log(cats)
 };
  
 fetchData();
 }, []);
-const handleOpen =(e,sub,item)=> {
+function handleOpen (e,sub,item){
   e.preventDefault();
   let month=parseInt(sub.date)+1
-  let rech='month='+year+'-'+month+'&categorie='+item.categorie+'&subcategorie='+item.subcategorie
+  let subcat=(!item.subcategorie)?(''):(item.subcategorie)
+  let rech='month=2021-'+month+'&categorie='+item.categorie+'&subcategorie='+subcat
   console.log(rech)
   setMonth_year(rech)
-  axios.get('http://127.0.0.1:3333/decaisses?month=2021-5&categorie=features&subcategorie=clients').then(res=>{
+  axios.get(`http://127.0.0.1:3333/decaisses?${rech}`,config).then(res=>{
     setDecaissements(res.data)
   })
  setOpen(true)
 
 };
+
 const handleClick=(e,item)=>{
   e.preventDefault()
   const tab=data
@@ -181,7 +203,7 @@ var days = ("0" + reglement.getDate()).slice(-2);
 var months = ("0" + (reglement.getMonth() + 1)).slice(-2);
 let date_facts=reglement.getFullYear()+'-'+(months)+'-'+(days)
 setReglement(date_facts.toString())
-setCategorie(item.categorie)
+setCat(item.categorie)
 setSubcategorie(item.subcategorie)
 setMemo(item.memo)
 let subs=[]
@@ -201,16 +223,31 @@ setSubcats(subs)
  const handleClosemodal = () => {
   setOpenmodal(false)
  };
- const validate=()=>{
-  if(intitule!=''&&type!=''&&montant!=''&&tva!=''&&facturation!=''&&cat!='')
-  setDisabled(false)
-  else setDisabled(true)
+ function init(){
+  setIntitule('')
+  setType('')
+  setMontant('')
+  setReglement('')
+  setFacturation('')
+  setTva('')
+  setCat('')
+  setSubcategorie('')
+  setTypeError('')
+  setIntituleError('')
+  setMontantError('')
+  setFacturationError('')
+  setReglementError('')
+  setCategorieError('')
+  setSubcatError('')
+  setSubcats([])
+  setDisablereglement(true)
+  setValid(false)
 }
+
  
  const handleChangeIntitule=(e)=>{
    e.preventDefault();
    setIntitule(e.target.value)
- validate()
  }
  const handleChangeType=(e)=>{
    e.preventDefault();
@@ -221,64 +258,98 @@ setSubcats(subs)
    }
    else if (e.target.value=='engagee')
    setDisablereglement(false)
-   validate()
- }
+   }
  const handleChangeMontant=(e)=>{
    e.preventDefault();
    setMontant(e.target.value)
-   validate()
- }
+   }
  const handleChangeTva=(e)=>{
    e.preventDefault();
    setTva(e.target.value)
-   validate()
- }
+   }
  const handleChangeFacturation=(e)=>{
    e.preventDefault();
    setFacturation(e.target.value)
-   validate()
- }
+   }
  const handleChangeReglement=(e)=>{
    e.preventDefault();
    setReglement(e.target.value)
-   validate()
- }
+   }
 
  const handleChangeSubcat=(e)=>{
    e.preventDefault();
    setSubcategorie(e.target.value)
-   validate()
- }
+   }
  const handleChangeMemo=(e)=>{
    e.preventDefault();
    setMemo(e.target.value)
  
  }
-const handleDelete=(e,item)=>{
+ const handleDelete=(e,item)=>{
   e.preventDefault();
-  axios.delete(`http://127.0.0.1:3333/decaisse/${id}`).then(res => {   
+  let date=new Date(facturation).getFullYear()
+  axios.delete(`http://127.0.0.1:3333/decaisse/${id}`,config).then(res => {   
     let tab=decaissements   
           tab=tab.filter(enc=> enc.id !==id);
           setDecaissements(tab)
+          handleYear(date)
 
   })   
   handleClosemodal()
+  toast.error('supprimé avec success',{position:toast.POSITION.BOTTOM_RIGHT})
 
 }
+function validate(){
+  if(!intitule||intitule=='')
+  {setIntituleError('champ obligatoire')
+  setValid(false)}
+  if(intitule!='')
+  setIntituleError('')
+  if(type=='')
+  {setTypeError('champ obligatoire')
+  setValid(false)}
+  if(type!='')
+  setTypeError('')
+  if(!montant||montant=='')
+  {setMontantError('champ obligatoire')
+  setValid(false)}
+  if(type=='engagee'&&reglement==''){
+    setValid(false)
+  }
+  if(montant!='')
+  setMontantError('')
+  if(!facturation||facturation=='')
+  {setFacturationError('champ obligatoire')
+  setValid(false)}
+  if(facturation!='')
+  setFacturationError('')
+  if(cat=='')
+  {setCategorieError('champ obligatoire')
+    setValid(false)}
+  if(categorie!='')
+  setCategorieError('')
+  if(intitule!=''&&type!=''&&montant!=''&&facturation!=''&&cat!='')
+  {
+  setValid(true)
+  }
+   }
 const handleUpdate=(e)=>{
   e.preventDefault();
-  const decaisse = {
+  validate()
+ if(valid){
+  const encaisse = {
   intitule:intitule,
   montant:montant,
   type:type,
   tva:tva,
   facturation:facturation,
   reglement:reglement,
-  categorie:categorie,
+  categorie:cat,
   subcategorie:subcategorie,
   memo:memo
 }
-axios.put(`http://127.0.0.1:3333/decaisse/${id}`,decaisse).then(res=>{
+let date=new Date(facturation).getFullYear()
+axios.put(`http://127.0.0.1:3333/decaisse/${id}`,encaisse,config).then(res=>{
   let tab=decaissements
   for (let i of tab)
     if(i.id===id){
@@ -288,20 +359,20 @@ axios.put(`http://127.0.0.1:3333/decaisse/${id}`,decaisse).then(res=>{
       i.tva=tva
       i.facturation=facturation
       i.reglement=reglement
-      i.categorie=categorie
+      i.categorie=cat
       i.subcategorie=subcategorie
       i.memo=memo
-      continue
+      break
     }
     setDecaissements(tab)
-    setSuccess(true)
+    handleYear(date)
     handleClosemodal()
-
-  
 })
+toast.success('modifié avec success',{position:toast.POSITION.BOTTOM_RIGHT})
+}
 }
 const handleYear=(years)=>{
-  axios.get(`http://127.0.0.1:3333/enc-month?year=${years}`).then(res=>{
+  axios.get(`http://127.0.0.1:3333/dec-month?year=${years}`,config).then(res=>{
   setdata(res.data)
   })
 
@@ -322,24 +393,20 @@ const handleSelect=(e)=>{
   setSubcats(subs)
   console.log(cat,subcats)
 }
-const init=()=>{
-  setType('')
-  setIntitule('')
-  setMontant('')
-  setFacturation('')
-  setReglement('')
-  setCat('')
-  setSubcategorie('')
-  setSubcats([])
-  setDisabled(true)
-  setDisablereglement(false)
-}
+
 const cancel=(e)=>{
   e.preventDefault()
   handleClosemodal()
   init()
 
 }
+useImperativeHandle(ref, () => ({
+  setData(year){
+    axios.get(`http://127.0.0.1:3333/dec-month?year=${year}`,config).then(res=>{
+  setdata(res.data)
+  })
+  }
+    }));
 let body=  (<div style={modalStyle} className={classes.paper}> 
 <Table>
   <TableHead>
@@ -362,25 +429,27 @@ let body=  (<div style={modalStyle} className={classes.paper}>
   </TableBody>
 </Table>
 <Modal
-       open={openmodal}
-       onClose={handleClosemodal}
-       aria-labelledby="simple-modal-title"
-       aria-describedby="simple-modal-description"
+             open={openmodal}
+             onClose={handleClosemodal}
+             aria-labelledby="simple-modal-title"
+             aria-describedby="simple-modal-description"
+           
      
       >
-        
-        <div style={modalStyle} className={classes.paper1}> 
-        <ModalHeader>
-            <ModalTitle><TrendingDownIcon style={{color:"green"}}/> Modifier opération</ModalTitle>          
-            </ModalHeader>
-            <form  onSubmit={(e)=>handleUpdate(e)}>
+                <div style={modalStyle} className={classes.paper1}> 
+        <ModalHeader closeButton>
+          <ModalTitle>
+            <TrendingDownIcon style={{color:"red"}}/>Modifier Operation Payée       
+          </ModalTitle>
+        </ModalHeader>
+        <form>
         <ModalBody>
         <div class="row">
         <div class="col-sm-6">
     <label >intitulé</label>
-    <input type="text" class="form-control"  onChange={e=>handleChangeIntitule(e)} id="intitule" value={intitule}/>
-    {(intitule=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>
-):(<area/>)}
+    <input type="text" class="form-control"  onChange={e=>handleChangeIntitule(e)} id="intitule" defaultValue={intitule}/>
+    <div style={{ fontSize: 12, color: "red" }}>{intituleError}</div>
+
 </div>
     <div class="col-sm-6">
     <label for="type">type de l'opération</label>
@@ -389,45 +458,45 @@ let body=  (<div style={modalStyle} className={classes.paper}>
       <option value="payee">payée</option>
       <option value="engagee">engagée</option>
     </select>
-    {(type=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+  <div style={{ fontSize: 12, color: "red" }}>{TypeError}</div>
 </div>
   </div>
        
   <div class="row mt-3">
   <div class="col-sm-6">
     <label >Montant</label>
-    <input type="number" class="form-control" id="montant" onChange={e=>handleChangeMontant(e)}  value={montant}/>
-    {(montant=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+    <input type="number" class="form-control" id="montant" onChange={e=>handleChangeMontant(e)} defaultValue={montant} />
+   <div style={{ fontSize: 12, color: "red" }}>{MontantError}</div>
   </div>
   <div class="col-sm-6"><label >TVA</label>
-    <input type="number" class="form-control" id="tva" onChange={e=>handleChangeTva(e)}  value={tva}/>
+    <input type="number" class="form-control" id="tva" onChange={e=>handleChangeTva(e)} defaultValue={tva} />
 </div>
   </div>
   <div class="row mt-3">
   <div class="col-sm-6">
     <label >Date de facturation</label>
-    <input type="date" class="form-control" id="facturation" onChange={e=>handleChangeFacturation(e)}  value={facturation}/>
-    {(facturation=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+    <input type="date" class="form-control" id="facturation" onChange={e=>handleChangeFacturation(e)} defaultValue={facturation} />
+    <div style={{ fontSize: 12, color: "red" }}>{FacturationError}</div>
   </div>
   <div class="col-sm-6"><label >Date de règlement</label>
-    <input type="date" class="form-control" id="reglement" onChange={e=>handleChangeReglement(e)} value={reglement} disabled={disablereglement}/>    
-    {(!disablereglement)?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+    <input type="date" class="form-control" id="reglement" onChange={e=>handleChangeReglement(e)} defaultValue={reglement} disabled={disablereglement}/>    
+    {(!disablereglement&&reglement=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
 </div>
   </div>
   <div class="form-group mt-3">
     <label for="cats"> Catégorie</label>
-    <select class="form-control"   onChange={e=>handleSelect(e)} value={categorie}>
+    <select class="form-control"   onChange={e=>handleSelect(e)} defaultValue={cat}>
     <option selected disabled>selectionner catégorie</option>
         {cats.map(event=>(
             <option  value={event.nom}>{event.nom}</option>
         ))}
       </select>
-      {(cat=='')?(<div style={{ fontSize: 12, color: "red" }}>* champ obligatoire</div>):(<area/>)}
+  <div style={{ fontSize: 12, color: "red" }}>{CategorieError}</div>
         </div>
         {(subcats.length!=0)?(
         <div class="form-group mt-3">
     <label for="cats"> Sous Catégorie</label>
-    <select class="form-control"  onChange={e=>handleChangeSubcat(e)} value={subcategorie}>
+    <select class="form-control"  onChange={e=>handleChangeSubcat(e)} defaultValue={subcategorie}>
       <option selected disabled>sélectionner sous-catégorie</option>
         {subcats.map(event=>(
             <option >{event.nom}</option>
@@ -438,15 +507,15 @@ let body=  (<div style={modalStyle} className={classes.paper}>
         }
   <div class="form-group mt-3">
     <label > Mémo</label>
-    <input type="text" class="form-control" id="memo" onChange={e=>handleChangeMemo(e)}  value={memo}/>
+    <input type="text" class="form-control" id="memo" onChange={e=>handleChangeMemo(e)}  defaultValue={memo}/>
   </div>
   
 
 
-<br/>
+  <br/>
 <div class="row">
 <button className="btn btn-outline-danger  col m-3" onClick={e=>{handleDelete(e,id)}}>Supprimer</button>
-<button className="btn btn-outline-success col m-3" onClick={e=>handleUpdate(e)}>Modifier</button>
+<button type="submit" className="btn btn-outline-success col m-3" onClick={e=>handleUpdate(e)}>Modifier</button>
 
 </div>
         </ModalBody>
@@ -458,9 +527,8 @@ let body=  (<div style={modalStyle} className={classes.paper}>
         
                  
                  </ModalFooter>
-
         </form>
-  </div>
+        </div>
       </Modal>
 </div>)
 
@@ -482,33 +550,24 @@ let body=  (<div style={modalStyle} className={classes.paper}>
   
   </div>
 <div class="container-fluid">
-<div  className="inline m-5 d-none"style={{display: 'flex',  justifyContent:'center', alignItems:'center'}}>
-  <form class="form-inline" >
-<label for="years"> veuillez choisir l'année:</label>
-<select class="form-control ml-3" id="years" name="years" value={props.year} onChange={handleYear}>
-        <option value="2019" >2019</option>
-        <option value="2020" >2020</option>
-        <option value="2021" >2021</option>
-      </select>
-      </form>
-      </div>
+
       
   <Table className="table table-bordered" >
     <TableHead style={{backgroundColor: "#e6e6e6"}}>
       <TableRow >
         <TableCell className={classes.cell}></TableCell>
-        <TableCell className={classes.montant}>Janvier</TableCell>
-        <TableCell className={classes.montant}>Février</TableCell>
-        <TableCell className={classes.montant}>Mars</TableCell>
-        <TableCell className={classes.montant}>Avril</TableCell>
-        <TableCell className={classes.montant}>Mai</TableCell>
-        <TableCell className={classes.montant}>Juin</TableCell>
-        <TableCell className={classes.montant}>Juillet</TableCell>
-        <TableCell className={classes.montant}>Aout</TableCell>
-        <TableCell className={classes.montant}>Septembre</TableCell>
-        <TableCell className={classes.montant}>Octobre</TableCell>
-        <TableCell className={classes.montant}>Novembre</TableCell>
-        <TableCell className={classes.montant}>Décembre</TableCell>
+        <TableCell className={classes.sum}>Janvier</TableCell>
+        <TableCell className={classes.sum}>Février</TableCell>
+        <TableCell className={classes.sum}>Mars</TableCell>
+        <TableCell className={classes.sum}>Avril</TableCell>
+        <TableCell className={classes.sum}>Mai</TableCell>
+        <TableCell className={classes.sum}>Juin</TableCell>
+        <TableCell className={classes.sum}>Juillet</TableCell>
+        <TableCell className={classes.sum}>Aout</TableCell>
+        <TableCell className={classes.sum}>Septembre</TableCell>
+        <TableCell className={classes.sum}>Octobre</TableCell>
+        <TableCell className={classes.sum}>Novembre</TableCell>
+        <TableCell className={classes.sum}>Décembre</TableCell>
         </TableRow>
     </TableHead>
    
@@ -527,7 +586,7 @@ let body=  (<div style={modalStyle} className={classes.paper}>
                                                           />)}</Button></TableCell>
                                                           
             {item.tab.map(e=>(
-              <TableCell className={classes.montant}>{e.montant}</TableCell>
+              <TableCell className={classes.sum}>{e.montant}</TableCell>
             ))}
           </TableRow>
           <Collapse
@@ -538,8 +597,7 @@ let body=  (<div style={modalStyle} className={classes.paper}>
                                                       unmountOnExit
                                                   >
                    {item.subs.map(sid=>(
-           <TableRow style={style2}  onMouseEnter={(e) => setColor("#cfcfcf")}
-           onMouseLeave={(e) => setColor("")} > 
+           <TableRow > 
              <TableCell className={classes.cell}>{sid.subcategorie}</TableCell>
              {sid.sum.map(e=>(
                <TableCell  className={classes.montant} onClick={event=>{handleOpen(event,e,sid)}}>{e.montant} </TableCell>
@@ -562,7 +620,7 @@ let body=  (<div style={modalStyle} className={classes.paper}>
             <TableRow style={{backgroundColor: "#e6e6e6"}}>
         <TableCell className={classes.cell}>{item.categorie}</TableCell>
         {item.tab.map(e =>(
-        <TableCell className={classes.montant}><Button onClick={handleOpen}>{e.montant}</Button>
+        <TableCell className={classes.montant} onClick={event=>handleOpen(event,e)}>{e.montant}
                               
       </TableCell>
         ))}
@@ -594,5 +652,5 @@ let body=  (<div style={modalStyle} className={classes.paper}>
 </main>
   );
       
-}
+});
 export default Decaissement;
